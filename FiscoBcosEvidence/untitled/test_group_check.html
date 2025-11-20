@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分组验证测试</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>分组创建验证</h1>
+    <div id="result"></div>
+
+    <script>
+        async function checkGroup() {
+            try {
+                // 这里需要先登录获取token
+                console.log('开始检查分组...');
+
+                // 模拟test用户登录
+                const loginResponse = await axios.post('http://localhost:8080/api/auth/login', {
+                    username: 'test',
+                    password: 'test123'
+                });
+
+                if (loginResponse.data && loginResponse.data.success) {
+                    const token = loginResponse.data.data.token;
+                    console.log('登录成功，获取到token');
+
+                    // 设置默认请求头
+                    axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+
+                    // 查询分组列表
+                    const groupsResponse = await axios.get('http://localhost:8080/api/file-evidence-management/groups/page', {
+                        params: {
+                            current: 1,
+                            size: 100,
+                            searchKeyword: '区块链'
+                        }
+                    });
+
+                    console.log('分组查询响应:', groupsResponse.data);
+
+                    const resultDiv = document.getElementById('result');
+
+                    if (groupsResponse.data && groupsResponse.data.success) {
+                        const groups = groupsResponse.data.data.records || [];
+
+                        // 查找"区块链"分组
+                        const blockchainGroup = groups.find(group =>
+                            group.groupName === '区块链' || group.groupCode === 'PROJECT_3_425'
+                        );
+
+                        if (blockchainGroup) {
+                            resultDiv.innerHTML = `
+                                <h2 style="color: green;">✅ 分组创建成功！</h2>
+                                <div style="background: #f0f9ff; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                                    <h3>分组信息:</h3>
+                                    <p><strong>分组ID:</strong> ${blockchainGroup.id}</p>
+                                    <p><strong>分组名称:</strong> ${blockchainGroup.groupName}</p>
+                                    <p><strong>分组代码:</strong> ${blockchainGroup.groupCode}</p>
+                                    <p><strong>创建者:</strong> ${blockchainGroup.creatorName}</p>
+                                    <p><strong>创建时间:</strong> ${blockchainGroup.createdAt}</p>
+                                    <p><strong>状态:</strong> ${blockchainGroup.status === 1 ? '启用' : '禁用'}</p>
+                                    <p><strong>描述:</strong> ${blockchainGroup.description || '无'}</p>
+                                </div>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `
+                                <h2 style="color: orange;">⚠️ 未找到指定分组</h2>
+                                <p>没有找到名为"区块链"或代码为"PROJECT_3_425"的分组</p>
+                                <h3>当前所有分组:</h3>
+                                <div style="background: #f5f5f5; padding: 10px; border-radius: 5px;">
+                                    ${groups.length > 0 ?
+                                        groups.map(g => `<p>• ${g.groupName} (${g.groupCode})</p>`).join('') :
+                                        '<p>暂无分组</p>'
+                                    }
+                                </div>
+                            `;
+                        }
+                    } else {
+                        resultDiv.innerHTML = `
+                            <h2 style="color: red;">❌ 查询分组失败</h2>
+                            <p>错误信息: ${groupsResponse.data?.message || '未知错误'}</p>
+                        `;
+                    }
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <h2 style="color: red;">❌ 登录失败</h2>
+                        <p>无法登录test用户，请检查用户是否存在</p>
+                        <p>错误信息: ${loginResponse.data?.message || '未知错误'}</p>
+                    `;
+                }
+            } catch (error) {
+                console.error('检查过程中出错:', error);
+                document.getElementById('result').innerHTML = `
+                    <h2 style="color: red;">❌ 检查失败</h2>
+                    <p>请求失败: ${error.message}</p>
+                    <p>请确保应用正在运行在 http://localhost:8080</p>
+                `;
+            }
+        }
+
+        // 页面加载后自动执行检查
+        window.onload = checkGroup;
+    </script>
+</body>
+</html>

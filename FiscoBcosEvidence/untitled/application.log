@@ -1,0 +1,221 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------< com.evidence:blockchain-evidence-system >---------------
+[INFO] Building blockchain-evidence-system 1.0.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:2.7.18:run (default-cli) > test-compile @ blockchain-evidence-system >>>
+[WARNING] 1 problem was encountered while building the effective model for org.javassist:javassist:jar:3.20.0-GA
+[WARNING] The artifact mysql:mysql-connector-java:jar:8.0.33 has been relocated to com.mysql:mysql-connector-j:jar:8.0.33: MySQL Connector/J artifacts moved to reverse-DNS compliant Maven 2+ coordinates.
+[INFO] 
+[INFO] --- resources:3.2.0:resources (default-resources) @ blockchain-evidence-system ---
+[INFO] Using 'UTF-8' encoding to copy filtered resources.
+[INFO] Using 'UTF-8' encoding to copy filtered properties files.
+[INFO] Copying 4 resources
+[INFO] Copying 32 resources
+[INFO] 
+[INFO] --- compiler:3.8.1:compile (default-compile) @ blockchain-evidence-system ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.2.0:testResources (default-testResources) @ blockchain-evidence-system ---
+[INFO] Not copying test resources
+[INFO] 
+[INFO] --- compiler:3.8.1:testCompile (default-testCompile) @ blockchain-evidence-system ---
+[INFO] Not compiling test sources
+[INFO] 
+[INFO] <<< spring-boot:2.7.18:run (default-cli) < test-compile @ blockchain-evidence-system <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:2.7.18:run (default-cli) @ blockchain-evidence-system ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::               (v2.7.18)
+
+2025-08-21 12:14:33.265  INFO 2004 --- [           main] c.e.BlockchainEvidenceApplication        : Starting BlockchainEvidenceApplication using Java 17.0.7 on Linzhipeng with PID 2004 (E:\JavaProject\FiscoBcosEvidence\untitled\target\classes started by xiaoman in E:\JavaProject\FiscoBcosEvidence\untitled)
+2025-08-21 12:14:33.267 DEBUG 2004 --- [           main] c.e.BlockchainEvidenceApplication        : Running with Spring Boot v2.7.18, Spring v5.3.31
+2025-08-21 12:14:33.267  INFO 2004 --- [           main] c.e.BlockchainEvidenceApplication        : The following 1 profile is active: "dev"
+2025-08-21 12:14:33.942  INFO 2004 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2025-08-21 12:14:33.947  INFO 2004 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-08-21 12:14:33.949  INFO 2004 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.83]
+2025-08-21 12:14:34.039  INFO 2004 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-08-21 12:14:34.040  INFO 2004 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 745 ms
+Logging initialized using 'class org.apache.ibatis.logging.stdout.StdOutImpl' adapter.
+Registered plugin: 'com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor@a9c5b75'
+Parsed mapper file: 'file [E:\JavaProject\FiscoBcosEvidence\untitled\target\classes\mapper\EvidenceMapper.xml]'
+Parsed mapper file: 'file [E:\JavaProject\FiscoBcosEvidence\untitled\target\classes\mapper\UserMapper.xml]'
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.3.1 
+2025-08-21 12:14:34.405  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create BcosSDK, configPath: /E:/JavaProject/FiscoBcosEvidence/untitled/target/classes/config.toml
+2025-08-21 12:14:34.425  INFO 2004 --- [           main] o.f.bcos.sdk.network.ConnectionManager   :  all connections, size: 2, list: [ConnectionInfo{host='127.0.0.1', port=20200}, ConnectionInfo{host='127.0.0.1', port=20201}]
+2025-08-21 12:14:34.425  INFO 2004 --- [           main] org.fisco.bcos.sdk.network.NetworkImp    : 
+* TRACE INFORMATION:
+----------------------------
+====> STEP1: try to connect nodes with ecdsa context...
+
+2025-08-21 12:14:34.425  INFO 2004 --- [           main] org.fisco.bcos.sdk.network.NetworkImp    : ====> <==== STEP1-1: Load certificates for ecdsa context success..., start connManager with ECDSA sslContext
+2025-08-21 12:14:34.489  INFO 2004 --- [           main] o.f.bcos.sdk.network.ConnectionManager   :  build ECDSA ssl context with configured certificates 
+2025-08-21 12:14:35.843  INFO 2004 --- [           main] o.f.bcos.sdk.network.ConnectionManager   :  ssl handshake success 127.0.0.1:20200
+2025-08-21 12:14:35.843  INFO 2004 --- [           main] o.f.bcos.sdk.network.ConnectionManager   :  ssl handshake success 127.0.0.1:20201
+2025-08-21 12:14:35.844  INFO 2004 --- [ntLoopGroup-2-2] o.fisco.bcos.sdk.network.ChannelHandler  :  handshake success, host: 127.0.0.1, port: 20201, ctx: 1147753596
+2025-08-21 12:14:35.844  INFO 2004 --- [ntLoopGroup-2-1] o.fisco.bcos.sdk.network.ChannelHandler  :  handshake success, host: 127.0.0.1, port: 20200, ctx: 404477280
+2025-08-21 12:14:35.887  INFO 2004 --- [ntLoopGroup-2-2] org.fisco.bcos.sdk.channel.ChannelImp    :  node: ClientVersion{version='2.9.1', supportedVersion='2.9.1', chainId='1', buildTime='20220922 08:57:35', buildType='Linux/g++/Release', gitBranch='HEAD', gitCommitHash='83a87ad749475c0edcc6d5ce2dabd328a36d3bae'}, content: {"id":1,"jsonrpc":"2.0","result":{"Build Time":"20220922 08:57:35","Build Type":"Linux/g++/Release","Chain Id":"1","FISCO-BCOS Version":"2.9.1","Git Branch":"HEAD","Git Commit Hash":"83a87ad749475c0edcc6d5ce2dabd328a36d3bae","Supported Version":"2.9.1"}}
+
+2025-08-21 12:14:35.887  INFO 2004 --- [ntLoopGroup-2-1] org.fisco.bcos.sdk.channel.ChannelImp    :  node: ClientVersion{version='2.9.1', supportedVersion='2.9.1', chainId='1', buildTime='20220922 08:57:35', buildType='Linux/g++/Release', gitBranch='HEAD', gitCommitHash='83a87ad749475c0edcc6d5ce2dabd328a36d3bae'}, content: {"id":0,"jsonrpc":"2.0","result":{"Build Time":"20220922 08:57:35","Build Type":"Linux/g++/Release","Chain Id":"1","FISCO-BCOS Version":"2.9.1","Git Branch":"HEAD","Git Commit Hash":"83a87ad749475c0edcc6d5ce2dabd328a36d3bae","Supported Version":"2.9.1"}}
+
+2025-08-21 12:14:35.887  INFO 2004 --- [ntLoopGroup-2-2] org.fisco.bcos.sdk.channel.ChannelImp    :  support channel handshake node
+2025-08-21 12:14:35.887  INFO 2004 --- [ntLoopGroup-2-1] org.fisco.bcos.sdk.channel.ChannelImp    :  support channel handshake node
+2025-08-21 12:14:35.890  INFO 2004 --- [ntLoopGroup-2-1] org.fisco.bcos.sdk.channel.ChannelImp    :  channel protocol handshake success, set socket channel protocol, host: 127.0.0.1:20200, channel protocol: ChannelProtocol [protocol=3, nodeVersion=2.9.1, EnumProtocol=VERSION_3]
+2025-08-21 12:14:35.890  INFO 2004 --- [ntLoopGroup-2-2] org.fisco.bcos.sdk.channel.ChannelImp    :  channel protocol handshake success, set socket channel protocol, host: 127.0.0.1:20201, channel protocol: ChannelProtocol [protocol=3, nodeVersion=2.9.1, EnumProtocol=VERSION_3]
+2025-08-21 12:14:35.905  INFO 2004 --- [           main] org.fisco.bcos.sdk.channel.ChannelImp    :  Connect to  nodes: 127.0.0.1:20200, 127.0.0.1:20201, 
+2025-08-21 12:14:35.905  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create BcosSDK, start channel success, cryptoType: 0
+2025-08-21 12:14:35.907  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create BcosSDK, start channel succ, channelProcessorThreadSize: 20, receiptProcessorThreadSize: 20
+2025-08-21 12:14:35.912  INFO 2004 --- [           main] o.f.b.s.service.GroupManagerServiceImpl  : registerBlockNumberNotifyHandler
+2025-08-21 12:14:35.912  INFO 2004 --- [           main] o.f.b.s.service.GroupManagerServiceImpl  : registerTransactionNotifyHandler
+2025-08-21 12:14:35.925  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create BcosSDK, create groupManagerService success
+2025-08-21 12:14:36.143  INFO 2004 --- [           main] org.fisco.bcos.sdk.amop.AmopImp          : update subscribe inform 2 peers
+2025-08-21 12:14:36.146  INFO 2004 --- [           main] org.fisco.bcos.sdk.amop.AmopImp          : update subscribe inform 2 peers
+2025-08-21 12:14:36.146  INFO 2004 --- [           main] org.fisco.bcos.sdk.amop.AmopImp          : amop module started
+2025-08-21 12:14:36.146  INFO 2004 --- [           main] org.fisco.bcos.sdk.amop.AmopImp          : update subscribe inform 2 peers
+2025-08-21 12:14:36.146  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create BcosSDK, create Amop success
+2025-08-21 12:14:36.147  INFO 2004 --- [           main] com.evidence.config.FiscoBcosConfig      : FISCO BCOS SDK初始化成功
+2025-08-21 12:14:36.211  INFO 2004 --- [           main] org.fisco.bcos.sdk.client.Client         : build client success for group 1, crypto type 0
+2025-08-21 12:14:36.211  INFO 2004 --- [           main] org.fisco.bcos.sdk.BcosSDK               : create client for group 1 success
+2025-08-21 12:14:36.213  INFO 2004 --- [           main] com.evidence.config.FiscoBcosConfig      : FISCO BCOS Client初始化成功，连接群组: 1
+2025-08-21 12:14:36.219  INFO 2004 --- [           main] com.evidence.config.FiscoBcosConfig      : 密钥对创建成功，地址: 0x13f92f5857ec96747015f46ba28433c469565e6f
+2025-08-21 12:14:36.219  INFO 2004 --- [           main] com.evidence.config.FiscoBcosConfig      : 注意：此密钥对用于调用已部署的合约，合约部署者: 898457288863024490063273064590382392372346770492
+2025-08-21 12:14:36.334  INFO 2004 --- [           main] com.evidence.config.MinIOConfig          : MinIO客户端初始化成功: http://127.0.0.1:9000
+2025-08-21 12:14:36.334  INFO 2004 --- [           main] com.evidence.config.MinIOConfig          : MinIO控制台地址: http://127.0.0.1:9001
+2025-08-21 12:14:36.419  INFO 2004 --- [           main] com.evidence.util.MinIOUtil              : MinIO存储桶检查完成: evidence-files
+2025-08-21 12:14:36.488  INFO 2004 --- [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@3c826498, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@2633d09c, org.springframework.security.web.context.SecurityContextPersistenceFilter@32d1d6c5, org.springframework.security.web.header.HeaderWriterFilter@2e0163cb, org.springframework.security.web.authentication.logout.LogoutFilter@74bfdd66, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter@6fcc0a1, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@58583a2d, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@614cd187, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@54f25b42, org.springframework.security.web.session.SessionManagementFilter@74619273, org.springframework.security.web.access.ExceptionTranslationFilter@3275a47f, org.springframework.security.web.access.intercept.FilterSecurityInterceptor@670c171c]
+2025-08-21 12:14:36.562  INFO 2004 --- [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-08-21 12:14:36.661  INFO 2004 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2025-08-21 12:14:36.666  INFO 2004 --- [           main] c.e.BlockchainEvidenceApplication        : Started BlockchainEvidenceApplication in 3.645 seconds (JVM running for 3.896)
+2025-08-21 12:16:55.731  INFO 2004 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-08-21 12:16:55.731  INFO 2004 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-08-21 12:16:55.732  INFO 2004 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+Creating a new SqlSession
+SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@6344ff55] was not registered for synchronization because synchronization is not active
+2025-08-21 12:17:55.719  WARN 2004 --- [nio-8080-exec-3] c.b.m.c.t.support.ReflectLambdaMeta      : Unable to make field private final java.lang.Class java.lang.invoke.SerializedLambda.capturingClass accessible: module java.base does not "opens java.lang.invoke" to unnamed module @1786f9d5
+2025-08-21 12:17:55.728  INFO 2004 --- [nio-8080-exec-3] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-08-21 12:17:55.808  INFO 2004 --- [nio-8080-exec-3] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+JDBC Connection [HikariProxyConnection@434709133 wrapping com.mysql.cj.jdbc.ConnectionImpl@5bda3f86] will not be managed by Spring
+==>  Preparing: SELECT id,username,password,real_name,email,did,status,created_at,updated_at FROM users WHERE (username = ?)
+==> Parameters: admin(String)
+<==    Columns: id, username, password, real_name, email, did, status, created_at, updated_at
+<==        Row: 1, admin, $2a$10$CN9Gy7evIC6Cll3TTfjc5urms7fQ37uBZgxtsuP4ylrh0IbCzgaga, 系统管理员, admin@example.com, did:evidence:ab41693cdf1d8a0c, 1, 2025-08-13 15:50:02, 2025-08-21 11:10:46
+<==      Total: 1
+Closing non transactional SqlSession [org.apache.ibatis.session.defaults.DefaultSqlSession@6344ff55]
+2025-08-21 12:17:55.904 ERROR 2004 --- [nio-8080-exec-3] com.evidence.controller.AuthController   : 登录失败
+java.lang.RuntimeException: 密码错误
+	at com.evidence.service.impl.UserServiceImpl.login(UserServiceImpl.java:51)
+	at com.evidence.service.impl.UserServiceImpl$$FastClassBySpringCGLIB$$6788fcdf.invoke(<generated>)
+	at org.springframework.cglib.proxy.MethodProxy.invoke(MethodProxy.java:218)
+	at org.springframework.aop.framework.CglibAopProxy.invokeMethod(CglibAopProxy.java:386)
+	at org.springframework.aop.framework.CglibAopProxy.access$000(CglibAopProxy.java:85)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:703)
+	at com.evidence.service.impl.UserServiceImpl$$EnhancerBySpringCGLIB$$e2373097.login(<generated>)
+	at com.evidence.controller.AuthController.login(AuthController.java:26)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:205)
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:150)
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:117)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:895)
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:808)
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87)
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1072)
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:965)
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1006)
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:909)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:555)
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:883)
+	at javax.servlet.http.HttpServlet.service(HttpServlet.java:623)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:209)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:337)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.invoke(FilterSecurityInterceptor.java:115)
+	at org.springframework.security.web.access.intercept.FilterSecurityInterceptor.doFilter(FilterSecurityInterceptor.java:81)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:122)
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:116)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:126)
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:81)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:109)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:149)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:223)
+	at org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter.doFilter(AbstractAuthenticationProcessingFilter.java:217)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:103)
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:89)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:112)
+	at org.springframework.security.web.context.SecurityContextPersistenceFilter.doFilter(SecurityContextPersistenceFilter.java:82)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:55)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:346)
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:221)
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:186)
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:354)
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:267)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201)
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:117)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:178)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:153)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:168)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:481)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:130)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:342)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:390)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:928)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1794)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191)
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.base/java.lang.Thread.run(Thread.java:833)

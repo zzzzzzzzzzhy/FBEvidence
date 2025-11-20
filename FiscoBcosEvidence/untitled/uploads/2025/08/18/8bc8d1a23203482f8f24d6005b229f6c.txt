@@ -1,0 +1,92 @@
+sudo apt-get update
+sudo apt-get install -y curl git make
+
+# 创建golang推荐的目录结构
+mkdir -p $HOME/go/src/github.com/fabric
+# 进入工作目录
+cd $HOME/go/src/github.com/fabric
+
+获取安装脚本
+curl -sSLO https://raw.githubusercontent.com/hyperledger/fabric/main/scripts/install-fabric.sh && chmod +x install-fabric.sh
+
+查看脚本帮助
+./install-fabric.sh -h
+
+安装所有组件
+./install-fabric.sh
+
+检查docker镜像
+docker images | grep hyperledger
+
+检查二进制文件
+cd fabric-samples/bin
+ls -la
+
+进入测试网络目录
+cd $HOME/go/src/github.com/fabric/fabric-samples/test-network
+
+启动网络（含 2 组织、1 排序节点）
+# 赋予脚本执行权限
+chmod +x network.sh
+# 启动网络
+./network.sh up
+
+
+
+
+安装 Hyperledger Fabric 二进制工具
+1. 下载官方脚本
+cd ~/go/src/github.com/fabric/
+curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.5.0 1.5.4
+
+2. 添加二进制工具到 PATH
+echo 'export PATH=$PATH:$HOME/go/src/github.com/fabric/fabric-samples/bin' >> ~/.bashrc
+source ~/.bashrc
+
+3. 验证安装
+peer version
+configtxgen --help
+
+
+
+
+vim操作文件的指令：
+二、进入编辑模式
+打开文件后，Vim 默认处于命令模式（无法直接编辑）。
+按 i 键进入插入模式（左下角显示 -- INSERT --），此时可以输入 / 修改文本。
+三、定位错误行（第 118 行）
+在插入模式下，按 Esc 键回到命令模式。
+输入 :118 并按 Enter，Vim 会自动跳转到第 118 行。
+五、保存并退出 Vim
+完成修改后，按 Esc 键回到命令模式。
+输入以下命令保存并退出：
+bash
+:wq
+:w 表示保存（write）
+:q 表示退出（quit）
+:wq 组合表示保存并退出
+其他常用命令：
+:q!：强制退出不保存（放弃修改）
+:w：仅保存不退出
+
+七、Vim 基本操作补充
+移动光标：
+h（左）、j（下）、k（上）、l（右）
+gg：跳到文件开头
+G：跳到文件末尾
+删除文本：
+x：删除当前字符
+dw：删除当前单词
+dd：删除当前行
+撤销与重做：
+u：撤销上一步操作
+Ctrl + r：重做（恢复撤销）
+
+
+
+
+
+
+
+
+

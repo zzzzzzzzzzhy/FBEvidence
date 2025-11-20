@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询验证 - 区块链存证系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/images/logo.svg" alt="Logo" class="logo-img">
+                <h2>区块链存证系统 - 查询验证</h2>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="nav-buttons">
+                <button @click="goHome()" class="nav-btn">返回主页</button>
+                <button @click="navigateTo('upload')" class="nav-btn">文件存证</button>
+                <button @click="navigateTo('code')" class="nav-btn">代码存证</button>
+                <button @click="navigateTo('blockchain')" class="nav-btn">区块链信息</button>
+            </div>
+            <div class="user-info" v-if="userInfo">
+                <span>{{ userInfo.username }}</span>
+                <button @click="logout" class="logout-btn">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 查询验证概览 -->
+        <div class="section">
+            <h3>🔍 查询验证系统</h3>
+            <div class="overview-text">
+                <p>通过文件哈希、交易哈希或区块信息查询和验证存证记录的真实性。</p>
+            </div>
+        </div>
+
+        <!-- 快速查询 -->
+        <div class="section">
+            <h3>快速查询</h3>
+            <div class="quick-search">
+                <div class="search-form">
+                    <div class="search-type">
+                        <label>查询类型：</label>
+                        <div class="radio-group">
+                            <label><input type="radio" v-model="searchType" value="hash"> 文件哈希</label>
+                            <label><input type="radio" v-model="searchType" value="tx"> 交易哈希</label>
+                            <label><input type="radio" v-model="searchType" value="block"> 区块高度</label>
+                        </div>
+                    </div>
+                    <div class="search-input">
+                        <input
+                            type="text"
+                            v-model="searchValue"
+                            :placeholder="getPlaceholder()"
+                            @keyup.enter="performSearch">
+                        <button @click="performSearch" :disabled="!searchValue || searching" class="search-btn">
+                            {{ searching ? '查询中...' : '查询' }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 查询结果 -->
+                <div v-if="searchResult" class="search-result">
+                    <h4>查询结果</h4>
+                    <div class="result-card">
+                        <div class="result-item">
+                            <label>文件名：</label>
+                            <span>{{ searchResult.fileName }}</span>
+                        </div>
+                        <div class="result-item">
+                            <label>文件哈希：</label>
+                            <span class="hash-text">{{ searchResult.fileHash }}</span>
+                        </div>
+                        <div class="result-item">
+                            <label>文件大小：</label>
+                            <span>{{ formatFileSize(searchResult.fileSize) }}</span>
+                        </div>
+                        <div class="result-item">
+                            <label>上传时间：</label>
+                            <span>{{ formatDateTime(searchResult.createdAt) }}</span>
+                        </div>
+                        <div class="result-item">
+                            <label>区块链状态：</label>
+                            <span :class="getStatusClass(searchResult.chainStatus)">
+                                {{ getStatusText(searchResult.chainStatus) }}
+                            </span>
+                        </div>
+                        <div v-if="searchResult.transactionHash" class="result-item">
+                            <label>交易哈希：</label>
+                            <span class="hash-text">{{ searchResult.transactionHash }}</span>
+                        </div>
+                        <div v-if="searchResult.blockNumber" class="result-item">
+                            <label>区块高度：</label>
+                            <span>{{ searchResult.blockNumber }}</span>
+                        </div>
+                        <div class="result-actions">
+                            <button @click="downloadFile(searchResult)" class="action-btn">下载文件</button>
+                            <button @click="viewCertificate(searchResult)" class="action-btn">查看证书</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="searchError" class="search-error">
+                    <p>{{ searchError }}</p>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 存证列表 -->
+        <div class="section">
+            <h3>存证记录列表</h3>
+            <div class="list-container">
+                <div class="list-header">
+                    <div class="filter-group">
+                        <label>类型筛选：</label>
+                        <select v-model="filterType" @change="loadEvidenceList">
+                            <option value="">全部</option>
+                            <option value="FILE,TEXT">文件存证</option>
+                            <option value="CODE">代码存证</option>
+                        </select>
+                    </div>
+                    <button @click="loadEvidenceList" class="refresh-btn">刷新</button>
+                </div>
+
+                <div class="evidence-table">
+                    <div class="table-header">
+                        <div class="col">文件名</div>
+                        <div class="col">类型</div>
+                        <div class="col">文件大小</div>
+                        <div class="col">存证时间</div>
+                        <div class="col">状态</div>
+                        <div class="col">操作</div>
+                    </div>
+                    <div v-if="evidenceList.length === 0" class="empty-state">
+                        暂无存证记录
+                    </div>
+                    <div v-for="evidence in evidenceList" :key="evidence.id" class="table-row">
+                        <div class="col">{{ evidence.fileName }}</div>
+                        <div class="col">
+                            <span class="type-badge" :class="evidence.contentType">
+                                {{ getContentTypeText(evidence.contentType) }}
+                            </span>
+                        </div>
+                        <div class="col">{{ formatFileSize(evidence.fileSize) }}</div>
+                        <div class="col">{{ formatDateTime(evidence.createdAt) }}</div>
+                        <div class="col">
+                            <span :class="getStatusClass(evidence.chainStatus)">
+                                {{ getStatusText(evidence.chainStatus) }}
+                            </span>
+                        </div>
+                        <div class="col">
+                            <button @click="viewDetails(evidence)" class="action-btn">详情</button>
+                            <button @click="downloadFile(evidence)" class="action-btn">下载</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <div v-if="evidenceList.length > 0" class="pagination">
+                    <button @click="prevPage" :disabled="currentPage === 1" class="page-btn">上一页</button>
+                    <span class="page-info">第 {{ currentPage }} 页，共 {{ totalPages }} 页</span>
+                    <button @click="nextPage" :disabled="currentPage === totalPages" class="page-btn">下一页</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情对话框 -->
+    <div v-if="showDetailDialog" class="dialog-overlay" @click="closeDetailDialog">
+        <div class="dialog-container" @click.stop>
+            <div class="dialog-header">
+                <h3>存证详情</h3>
+                <button @click="closeDetailDialog" class="close-btn">×</button>
+            </div>
+            <div class="dialog-content" v-if="currentEvidence">
+                <div class="detail-item">
+                    <label>文件名：</label>
+                    <span>{{ currentEvidence.fileName }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>文件类型：</label>
+                    <span>{{ getContentTypeText(currentEvidence.contentType) }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>文件哈希：</label>
+                    <span class="hash-text">{{ currentEvidence.fileHash }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>文件大小：</label>
+                    <span>{{ formatFileSize(currentEvidence.fileSize) }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>存证时间：</label>
+                    <span>{{ formatDateTime(currentEvidence.createdAt) }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>区块链状态：</label>
+                    <span :class="getStatusClass(currentEvidence.chainStatus)">
+                        {{ getStatusText(currentEvidence.chainStatus) }}
+                    </span>
+                </div>
+                <div v-if="currentEvidence.transactionHash" class="detail-item">
+                    <label>交易哈希：</label>
+                    <span class="hash-text">{{ currentEvidence.transactionHash }}</span>
+                </div>
+                <div v-if="currentEvidence.blockNumber" class="detail-item">
+                    <label>区块高度：</label>
+                    <span>{{ currentEvidence.blockNumber }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            userInfo: null,
+            searchType: 'hash',
+            searchValue: '',
+            searching: false,
+            searchResult: null,
+            searchError: null,
+            evidenceList: [],
+            filterType: '',
+            currentPage: 1,
+            totalPages: 1,
+            pageSize: 10,
+            showDetailDialog: false,
+            currentEvidence: null
+        }
+    },
+    mounted() {
+        this.checkLogin();
+        this.loadEvidenceList();
+    },
+    methods: {
+        checkLogin() {
+            const userInfo = localStorage.getItem('userInfo');
+            const token = localStorage.getItem('token');
+
+            if (userInfo && token) {
+                this.userInfo = JSON.parse(userInfo);
+                // 设置axios默认请求头
+                axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+            } else {
+                window.location.href = '/static/index.html';
+            }
+        },
+
+        goHome() {
+            window.location.href = '/static/index.html';
+        },
+
+        navigateTo(module) {
+            const modulePages = {
+                'upload': '/static/upload.html',
+                'code': '/static/code.html',
+                'blockchain': '/static/blockchain.html'
+            };
+            if (modulePages[module]) {
+                window.location.href = modulePages[module];
+            }
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/static/index.html';
+        },
+
+        getPlaceholder() {
+            const placeholders = {
+                'hash': '请输入文件哈希值',
+                'tx': '请输入交易哈希值',
+                'block': '请输入区块高度'
+            };
+            return placeholders[this.searchType];
+        },
+
+        async performSearch() {
+            if (!this.searchValue.trim()) return;
+
+            this.searching = true;
+            this.searchResult = null;
+            this.searchError = null;
+
+            try {
+                let response;
+                // 去除前后空格
+                const trimmedValue = this.searchValue.trim();
+
+                if (this.searchType === 'hash') {
+                    // 文件哈希查询 - 使用路径参数
+                    response = await axios.get(`/api/evidence/hash/${trimmedValue}`);
+                } else if (this.searchType === 'tx') {
+                    // 交易哈希查询 - 查询存证记录而不是区块链数据
+                    response = await axios.get(`/api/evidence/transaction/${trimmedValue}`);
+                } else if (this.searchType === 'block') {
+                    // 区块高度查询 - 查询存证记录而不是区块链数据
+                    response = await axios.get(`/api/evidence/block/${trimmedValue}`);
+                }
+
+                if (response && (response.data.success || response.data.code === 200)) {
+                    let data = response.data.data;
+                    // 如果是区块查询，返回的是数组，取第一个
+                    if (this.searchType === 'block' && Array.isArray(data)) {
+                        this.searchResult = data.length > 0 ? data[0] : null;
+                        if (data.length > 1) {
+                            console.log(`该区块包含 ${data.length} 条存证记录，仅显示第一条`);
+                        }
+                    } else {
+                        this.searchResult = data;
+                    }
+
+                    if (!this.searchResult) {
+                        this.searchError = '未找到相关记录';
+                    }
+                } else {
+                    this.searchError = '查询失败：' + (response.data.message || '未知错误');
+                }
+            } catch (error) {
+                this.searchError = '查询失败：' + error.message;
+                console.error('查询失败:', error);
+            } finally {
+                this.searching = false;
+            }
+        },
+
+
+        async loadEvidenceList() {
+            try {
+                const params = {
+                    current: this.currentPage,
+                    size: this.pageSize
+                };
+
+                if (this.filterType) {
+                    params.contentType = this.filterType;
+                }
+
+                const response = await axios.get('/api/evidence/query', { params });
+
+                if (response.data.success || response.data.code === 200) {
+                    const data = response.data.data;
+                    if (data && data.records) {
+                        this.evidenceList = data.records;
+                        this.totalPages = data.pages || Math.ceil(data.total / this.pageSize);
+                    } else {
+                        this.evidenceList = data || [];
+                        this.totalPages = 1;
+                    }
+                } else {
+                    console.error('加载存证记录失败:', response.data.message);
+                }
+            } catch (error) {
+                console.error('加载存证记录失败:', error);
+            }
+        },
+
+        viewDetails(evidence) {
+            this.currentEvidence = evidence;
+            this.showDetailDialog = true;
+        },
+
+        closeDetailDialog() {
+            this.showDetailDialog = false;
+            this.currentEvidence = null;
+        },
+
+        downloadFile(evidence) {
+            alert(`下载文件: ${evidence.fileName}`);
+        },
+
+        viewCertificate(evidence) {
+            alert(`查看存证证书: ${evidence.fileName}`);
+        },
+
+        prevPage() {
+            if (this.currentPage > 1) {
+                this.currentPage--;
+                this.loadEvidenceList();
+            }
+        },
+
+        nextPage() {
+            if (this.currentPage < this.totalPages) {
+                this.currentPage++;
+                this.loadEvidenceList();
+            }
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        formatDateTime(dateTime) {
+            return new Date(dateTime).toLocaleString('zh-CN');
+        },
+
+        getContentTypeText(contentType) {
+            const typeMap = {
+                'FILE': '文件存证',
+                'TEXT': '文件存证',
+                'CODE': '代码存证'
+            };
+            return typeMap[contentType] || '未知类型';
+        },
+
+        getStatusClass(status) {
+            const statusClasses = {
+                0: 'status-pending',
+                1: 'status-success',
+                2: 'status-failed'
+            };
+            return statusClasses[status] || 'status-pending';
+        },
+
+        getStatusText(status) {
+            // 处理数字状态码（后端返回的格式）
+            if (typeof status === 'number') {
+                const numericStatusMap = {
+                    0: '待上链',
+                    1: '上链成功',
+                    2: '上链失败'
+                };
+                return numericStatusMap[status] || '未知状态';
+            }
+
+            // 处理字符串状态（兼容旧格式）
+            const statusMap = {
+                'success': '已上链',
+                'pending': '上链中',
+                'failed': '上链失败'
+            };
+            return statusMap[status] || '未知';
+        }
+    }
+});
+</script>
+
+<style>
+/* 引入公共样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(90deg, #409eff, #66b1ff);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-left .logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn, .logout-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover, .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 主容器 */
+.main-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.section {
+    background: white;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.section h3 {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 0;
+    border-bottom: 1px solid #dee2e6;
+    color: #2c3e50;
+}
+
+.overview-text {
+    padding: 20px;
+    color: #666;
+}
+
+/* 快速查询 */
+.quick-search {
+    padding: 20px;
+}
+
+.search-form {
+    margin-bottom: 20px;
+}
+
+.search-type {
+    margin-bottom: 15px;
+}
+
+.search-type label {
+    font-weight: bold;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-group label {
+    font-weight: normal;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.search-input {
+    display: flex;
+    gap: 10px;
+}
+
+.search-input input {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.search-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.search-btn:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.search-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.search-result {
+    border: 1px solid #28a745;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f8fff8;
+}
+
+.search-result h4 {
+    color: #28a745;
+    margin-bottom: 15px;
+}
+
+.search-error {
+    border: 1px solid #dc3545;
+    border-radius: 8px;
+    padding: 20px;
+    background: #fff8f8;
+    color: #dc3545;
+}
+
+.result-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.result-item {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.result-item label {
+    font-weight: bold;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.result-actions {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+
+/* 存证列表 */
+.list-container {
+    padding: 20px;
+}
+
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.refresh-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.evidence-table {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr 1.5fr;
+    background: #f8f9fa;
+    font-weight: bold;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr 1.5fr;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.col {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+}
+
+.type-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.type-badge.FILE {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.type-badge.CODE {
+    background: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.action-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+    font-size: 12px;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
+/* 分页 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.page-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.page-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #6c757d;
+}
+
+/* 状态样式 */
+.status-pending { color: #ffc107; font-weight: bold; }
+.status-success { color: #28a745; font-weight: bold; }
+.status-failed { color: #dc3545; font-weight: bold; }
+
+/* 其他样式 */
+.hash-text {
+    font-family: monospace;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.detail-item {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.detail-item label {
+    font-weight: bold;
+    width: 120px;
+    flex-shrink: 0;
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.dialog-content {
+    padding: 20px;
+}
+</style>
+</body>
+</html>

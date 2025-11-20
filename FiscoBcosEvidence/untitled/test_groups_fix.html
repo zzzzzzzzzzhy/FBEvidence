@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分组加载测试</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        .container { max-width: 800px; margin: 50px auto; padding: 20px; font-family: Arial, sans-serif; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>分组加载功能测试</h1>
+        <div>
+            <button onclick="testLogin()">1. 测试登录</button>
+            <button onclick="testLoadGroups()">2. 测试加载分组</button>
+            <button onclick="testFullFlow()">3. 完整流程测试</button>
+        </div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let token = null;
+
+        function addResult(type, title, content) {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'result ' + type;
+            resultDiv.innerHTML = `<h3>${title}</h3><div>${content}</div>`;
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        async function testLogin() {
+            addResult('info', '正在测试登录...', '使用默认测试凭据尝试登录');
+
+            try {
+                // 尝试不同的测试用户凭据
+                const testCredentials = [
+                    { username: 'admin', password: 'admin123' },
+                    { username: 'admin', password: '123123' },
+                    { username: 'test', password: 'test123' },
+                    { username: 'admin', password: 'admin' }
+                ];
+
+                for (let cred of testCredentials) {
+                    try {
+                        const response = await axios.post('http://localhost:8080/api/auth/login', cred);
+
+                        if (response.data && (response.data.success || response.data.code === 200)) {
+                            token = response.data.data.token;
+                            axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+
+                            addResult('success', '登录成功', `
+                                用户: ${cred.username}<br>
+                                Token: ${token.substring(0, 20)}...<br>
+                                用户信息: <pre>${JSON.stringify(response.data.data, null, 2)}</pre>
+                            `);
+                            return;
+                        }
+                    } catch (err) {
+                        console.log('尝试凭据失败:', cred.username);
+                    }
+                }
+
+                addResult('error', '登录失败', '所有测试凭据都无法登录，请检查用户账号');
+
+            } catch (error) {
+                addResult('error', '登录请求失败', `
+                    错误信息: ${error.message}<br>
+                    响应: <pre>${JSON.stringify(error.response?.data, null, 2)}</pre>
+                `);
+            }
+        }
+
+        async function testLoadGroups() {
+            if (!token) {
+                addResult('error', '加载分组失败', '请先登录获取token');
+                return;
+            }
+
+            addResult('info', '正在测试加载分组...', '使用已获取的token调用分组API');
+
+            try {
+                const response = await axios.get('http://localhost:8080/api/file-evidence-management/groups');
+
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    const groups = response.data.data || [];
+
+                    addResult('success', '分组加载成功', `
+                        找到 ${groups.length} 个分组<br>
+                        分组列表: <pre>${JSON.stringify(groups, null, 2)}</pre>
+                    `);
+
+                    // 检查是否有"区块链"分组
+                    const blockchainGroup = groups.find(g => g.groupName === '区块链' || g.groupCode === 'PROJECT_3_425');
+                    if (blockchainGroup) {
+                        addResult('success', '找到区块链分组', `
+                            分组信息: <pre>${JSON.stringify(blockchainGroup, null, 2)}</pre>
+                        `);
+                    } else {
+                        addResult('info', '未找到区块链分组', '没有找到名为"区块链"或代码为"PROJECT_3_425"的分组');
+                    }
+
+                } else {
+                    addResult('error', '分组加载失败', `
+                        API返回错误: ${response.data.message}<br>
+                        响应: <pre>${JSON.stringify(response.data, null, 2)}</pre>
+                    `);
+                }
+
+            } catch (error) {
+                addResult('error', '分组请求失败', `
+                    错误信息: ${error.message}<br>
+                    响应: <pre>${JSON.stringify(error.response?.data, null, 2)}</pre>
+                `);
+            }
+        }
+
+        async function testFullFlow() {
+            document.getElementById('results').innerHTML = '';
+            addResult('info', '开始完整流程测试', '依次测试登录和分组加载');
+
+            await testLogin();
+            await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
+            await testLoadGroups();
+        }
+
+        // 页面加载后显示说明
+        window.onload = function() {
+            addResult('info', '测试说明', `
+                这个页面用于测试分组下拉框为空的问题：<br>
+                1. 首先测试用户登录获取token<br>
+                2. 然后测试分组API调用<br>
+                3. 检查返回的分组数据格式<br>
+                4. 验证"区块链"分组是否存在<br><br>
+                请按顺序点击按钮进行测试，或直接点击"完整流程测试"
+            `);
+        };
+    </script>
+</body>
+</html>

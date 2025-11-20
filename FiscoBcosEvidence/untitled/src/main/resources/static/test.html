@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vue测试页面</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+    <h1>Vue测试页面</h1>
+    <p>当前时间: {{ currentTime }}</p>
+    <p>测试数据: {{ testData }}</p>
+    <el-button @click="showMessage">点击测试</el-button>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+
+<script>
+console.log('页面开始加载...');
+console.log('Vue版本:', Vue ? Vue.version : '未加载');
+console.log('Element UI是否可用:', typeof ELEMENT !== 'undefined');
+
+try {
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                currentTime: new Date().toLocaleString(),
+                testData: 'Vue正常工作！'
+            }
+        },
+        methods: {
+            showMessage() {
+                this.$message.success('Vue和Element UI都正常工作！');
+            }
+        },
+        mounted() {
+            console.log('Vue实例已挂载');
+            this.$message.info('页面加载完成');
+        }
+    });
+} catch (error) {
+    console.error('Vue初始化失败:', error);
+    document.getElementById('app').innerHTML = '<h1 style="color:red;">Vue初始化失败: ' + error.message + '</h1>';
+}
+</script>
+</body>
+</html>

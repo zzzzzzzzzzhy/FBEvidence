@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件存证 - 区块链存证系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/images/logo.svg" alt="Logo" class="logo-img">
+                <h2>区块链存证系统 - 文件存证</h2>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="nav-buttons">
+                <button @click="goHome()" class="nav-btn">返回主页</button>
+                <button @click="navigateTo('code')" class="nav-btn">代码存证</button>
+                <button @click="navigateTo('query')" class="nav-btn">查询验证</button>
+                <button @click="navigateTo('blockchain')" class="nav-btn">区块链信息</button>
+            </div>
+            <div class="user-info" v-if="userInfo">
+                <span>{{ userInfo.username }}</span>
+                <button @click="logout" class="logout-btn">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 标签页导航 -->
+        <div class="tab-navigation">
+            <button @click="activeTab = 'upload'" :class="{ active: activeTab === 'upload' }" class="tab-btn">文件上传</button>
+            <button @click="activeTab = 'management'" :class="{ active: activeTab === 'management' }" class="tab-btn">分组管理</button>
+            <button @click="activeTab = 'project'" :class="{ active: activeTab === 'project' }" class="tab-btn">项目管理</button>
+            <button @click="switchToBrowseTab()" :class="{ active: activeTab === 'browse' }" class="tab-btn">文件浏览</button>
+
+            <!-- 右侧快捷操作 -->
+            <div class="quick-actions">
+                <button @click="showQuickPanel = !showQuickPanel" class="quick-panel-btn">📊 数据概览</button>
+            </div>
+        </div>
+
+        <!-- 文件上传标签页 -->
+        <div v-if="activeTab === 'upload'" class="tab-content">
+            <div class="upload-container">
+                <!-- 分组和项目选择 -->
+                <div class="section">
+                    <h3>📁 文件存证上传</h3>
+                    <div class="selection-container">
+                        <div class="selection-row">
+                            <div class="form-group">
+                                <label>目标分组：</label>
+                                <select v-model="uploadForm.groupId" @change="onGroupChange">
+                                    <option value="">请选择分组</option>
+                                    <option v-for="group in groups" :key="group.id" :value="group.id">
+                                        {{ group.groupName }}
+                                    </option>
+                                </select>
+                                <button @click="showCreateGroupDialog = true" class="create-btn">新建分组</button>
+                            </div>
+                            <div class="form-group">
+                                <label>目标项目：</label>
+                                <select v-model="uploadForm.projectId">
+                                    <option value="">请选择项目</option>
+                                    <option v-for="project in projects" :key="project.id" :value="project.id">
+                                        {{ project.projectName }}
+                                    </option>
+                                </select>
+                                <button @click="showCreateProjectDialog = true" :disabled="!uploadForm.groupId" class="create-btn">新建项目</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 上传区域 -->
+                <div class="section">
+                    <div class="upload-container-single">
+                        <!-- 统一文件上传 -->
+                        <div class="upload-card-single">
+                            <h4>📄 单文件上传</h4>
+                            <div class="upload-area"
+                                 @drop="handleFileDrop"
+                                 @dragover="handleDragOver"
+                                 @dragleave="handleDragLeave"
+                                 :class="{ 'dragover': isDragOver }"
+                                 @click="triggerFileSelect">
+                                <div class="upload-icon">📁</div>
+                                <div class="upload-text">
+                                    <p>将文件拖到此处，或点击选择文件</p>
+                                    <p class="upload-hint">支持所有文件类型，单个文件大小限制：100MB</p>
+                                </div>
+                                <input type="file" ref="fileInput" @change="handleFileSelect" multiple style="display: none;">
+                            </div>
+
+                            <div v-if="selectedFiles.length > 0" class="file-list">
+                                <h5 v-if="selectedFiles.length === 1">已选择文件：</h5>
+                                <h5 v-else>已选择文件（{{ selectedFiles.length }}个）：</h5>
+                                <div class="file-list-container">
+                                    <div v-for="(file, index) in selectedFiles" :key="index" class="file-item">
+                                        <span class="file-icon">📄</span>
+                                        <span class="file-name">{{ file.name }}</span>
+                                        <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                                        <button @click="removeFile(index)" class="remove-btn">×</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="upload-options">
+                                <div class="form-group">
+                                    <label>哈希算法：</label>
+                                    <select v-model="uploadForm.hashAlgorithm">
+                                        <option value="SHA256">SHA256</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>文件描述：</label>
+                                    <textarea v-model="uploadForm.description" placeholder="请输入文件描述" rows="3"></textarea>
+                                </div>
+                                <button @click="uploadFiles" :disabled="selectedFiles.length === 0 || !uploadForm.projectId || loading.upload" class="primary-btn">
+                                    {{ loading.upload ? '上传中...' : '开始上传' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分组管理标签页 -->
+        <div v-if="activeTab === 'management'" class="tab-content">
+            <div class="management-container">
+                <div class="section">
+                    <h3>📁 分组管理</h3>
+                    <div class="management-header">
+                        <button @click="showCreateGroupDialog = true" class="primary-btn">新建分组</button>
+                        <button @click="loadGroups" class="refresh-btn">刷新</button>
+                    </div>
+
+                    <div class="groups-grid">
+                        <div v-for="group in groups" :key="group.id" class="group-card">
+                            <div class="group-header">
+                                <h4>{{ group.groupName }}</h4>
+                                <div class="group-actions">
+                                    <button @click="editGroup(group)" class="action-btn">编辑</button>
+                                </div>
+                            </div>
+                            <div class="group-content">
+                                <p class="group-code">代码: {{ group.groupCode || '未设置' }}</p>
+                                <p class="group-desc">{{ group.description || '暂无描述' }}</p>
+                                <p class="group-stats">项目数: {{ group.projectCount || 0 }} 个</p>
+                                <p class="group-time">创建时间: {{ formatDateTime(group.createdAt) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 项目管理标签页 -->
+        <div v-if="activeTab === 'project'" class="tab-content">
+            <div class="project-container">
+                <div class="section">
+                    <h3>📋 项目管理</h3>
+                    <div class="management-header">
+                        <div class="filter-controls">
+                            <select v-model="projectFilter.groupId" @change="loadProjects">
+                                <option value="">所有分组</option>
+                                <option v-for="group in groups" :key="group.id" :value="group.id">
+                                    {{ group.groupName }}
+                                </option>
+                            </select>
+                        </div>
+                        <button @click="showCreateProjectDialog = true" class="primary-btn">新建项目</button>
+                        <button @click="loadProjects" class="refresh-btn">刷新</button>
+                    </div>
+
+                    <div class="projects-grid">
+                        <div v-for="project in filteredProjects" :key="project.id" class="project-card">
+                            <div class="project-header">
+                                <h4>{{ project.projectName }}</h4>
+                                <div class="project-actions">
+                                    <button @click="editProject(project)" class="action-btn">编辑</button>
+                                </div>
+                            </div>
+                            <div class="project-content">
+                                <p class="project-group">分组: {{ getGroupName(project.groupId) }}</p>
+                                <p class="project-code">代码: {{ project.projectCode || '未设置' }}</p>
+                                <p class="project-desc">{{ project.description || '暂无描述' }}</p>
+                                <p class="project-stats">文件数: {{ project.fileCount || 0 }} 个</p>
+                                <p class="project-time">创建时间: {{ formatDateTime(project.createdAt) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文件浏览标签页 -->
+        <div v-if="activeTab === 'browse'" class="tab-content">
+            <div class="browse-container">
+                <div class="section">
+                    <h3>📄 文件浏览</h3>
+                    <div class="browse-header">
+                        <div class="filter-controls">
+                            <select v-model="browseFilter.groupId" @change="onBrowseGroupChange">
+                                <option value="">所有分组</option>
+                                <option v-for="group in groups" :key="group.id" :value="group.id">
+                                    {{ group.groupName }}
+                                </option>
+                            </select>
+                            <select v-model="browseFilter.projectId" @change="loadEvidenceList">
+                                <option value="">所有项目</option>
+                                <option v-for="project in browseProjects" :key="project.id" :value="project.id">
+                                    {{ project.projectName }}
+                                </option>
+                            </select>
+                            <input type="text" v-model="browseFilter.keyword" @input="loadEvidenceList" placeholder="搜索文件名...">
+                        </div>
+                        <button @click="loadEvidenceList" class="refresh-btn">刷新</button>
+                    </div>
+
+                    <div class="evidence-table">
+                        <div class="table-header">
+                            <div class="col">文件名</div>
+                            <div class="col">分组/项目</div>
+                            <div class="col">文件大小</div>
+                            <div class="col">哈希值</div>
+                            <div class="col">上传时间</div>
+                            <div class="col">操作</div>
+                        </div>
+                        <div v-for="evidence in evidenceList" :key="evidence.id" class="table-row">
+                            <div class="col">
+                                <div class="file-info">
+                                    <span class="file-icon">📄</span>
+                                    <span>{{ evidence.fileName }}</span>
+                                </div>
+                            </div>
+                            <div class="col">{{ evidence.groupName }}/{{ evidence.projectName }}</div>
+                            <div class="col">{{ formatFileSize(evidence.fileSize) }}</div>
+                            <div class="col">
+                                <span class="hash-text">{{ formatHash(evidence.fileHash) }}</span>
+                            </div>
+                            <div class="col">{{ formatDateTime(evidence.createdAt) }}</div>
+                            <div class="col">
+                                <div class="action-buttons">
+                                    <button @click="viewEvidenceDetail(evidence)" class="action-btn">详情</button>
+                                    <button @click="downloadFile(evidence)" class="action-btn">下载</button>
+                                    <button @click="verifyEvidence(evidence)" class="action-btn">验证</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 分页 -->
+                    <div class="pagination">
+                        <button @click="changePage(pagination.page - 1)" :disabled="pagination.page <= 1" class="page-btn">上一页</button>
+                        <span class="page-info">第 {{ pagination.page }} 页，共 {{ Math.ceil(pagination.total / pagination.size) }} 页</span>
+                        <button @click="changePage(pagination.page + 1)" :disabled="pagination.page >= Math.ceil(pagination.total / pagination.size)" class="page-btn">下一页</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 快捷操作面板 -->
+    <div v-if="showQuickPanel" class="quick-panel">
+        <div class="quick-panel-content">
+            <h4>📊 数据概览</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.groupCount }}</div>
+                    <div class="stat-label">分组总数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.projectCount }}</div>
+                    <div class="stat-label">项目总数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.fileCount }}</div>
+                    <div class="stat-label">文件总数</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.todayUpload }}</div>
+                    <div class="stat-label">今日上传</div>
+                </div>
+            </div>
+
+            <div class="quick-actions-section">
+                <h5>快捷操作</h5>
+                <div class="quick-buttons">
+                    <button @click="showCreateGroupDialog = true; showQuickPanel = false" class="quick-btn">新建分组</button>
+                    <button @click="showCreateProjectDialog = true; showQuickPanel = false" class="quick-btn">新建项目</button>
+                    <button @click="activeTab = 'upload'; showQuickPanel = false" class="quick-btn">立即上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建分组对话框 -->
+    <div v-if="showCreateGroupDialog" class="dialog-overlay" @click="closeCreateGroupDialog">
+        <div class="dialog-container" @click.stop>
+            <div class="dialog-header">
+                <h3>{{ editingGroup ? '编辑分组' : '创建新分组' }}</h3>
+                <button @click="closeCreateGroupDialog" class="close-btn">×</button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label>分组名称：</label>
+                    <input type="text" v-model="groupForm.groupName" placeholder="请输入分组名称" required>
+                </div>
+                <div class="form-group">
+                    <label>分组代码：</label>
+                    <div class="code-input-group">
+                        <input type="text" v-model="groupForm.groupCode" placeholder="请输入分组代码（可选）">
+                        <button @click="generateGroupCode" class="generate-btn">生成</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>分组描述：</label>
+                    <textarea v-model="groupForm.description" placeholder="请输入分组描述（可选）" rows="3"></textarea>
+                </div>
+                <div class="dialog-actions">
+                    <button @click="submitGroupForm" :disabled="!groupForm.groupName || loading.groupSubmit" class="primary-btn">
+                        {{ loading.groupSubmit ? '保存中...' : (editingGroup ? '更新' : '创建') }}
+                    </button>
+                    <button @click="closeCreateGroupDialog" class="secondary-btn">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建项目对话框 -->
+    <div v-if="showCreateProjectDialog" class="dialog-overlay" @click="closeCreateProjectDialog">
+        <div class="dialog-container" @click.stop>
+            <div class="dialog-header">
+                <h3>{{ editingProject ? '编辑项目' : '创建新项目' }}</h3>
+                <button @click="closeCreateProjectDialog" class="close-btn">×</button>
+            </div>
+            <div class="dialog-content">
+                <div class="form-group">
+                    <label>所属分组：</label>
+                    <select v-model="projectForm.groupId" required>
+                        <option value="">请选择分组</option>
+                        <option v-for="group in groups" :key="group.id" :value="group.id">
+                            {{ group.groupName }}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>项目名称：</label>
+                    <input type="text" v-model="projectForm.projectName" placeholder="请输入项目名称" required>
+                </div>
+                <div class="form-group">
+                    <label>项目代码：</label>
+                    <div class="code-input-group">
+                        <input type="text" v-model="projectForm.projectCode" placeholder="请输入项目代码（可选）">
+                        <button @click="generateProjectCode" class="generate-btn">生成</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>项目描述：</label>
+                    <textarea v-model="projectForm.description" placeholder="请输入项目描述（可选）" rows="3"></textarea>
+                </div>
+                <div class="dialog-actions">
+                    <button @click="submitProjectForm" :disabled="!projectForm.projectName || !projectForm.groupId || loading.projectSubmit" class="primary-btn">
+                        {{ loading.projectSubmit ? '保存中...' : (editingProject ? '更新' : '创建') }}
+                    </button>
+                    <button @click="closeCreateProjectDialog" class="secondary-btn">取消</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件详情对话框 -->
+    <div v-if="showDetailDialog" class="dialog-overlay" @click="closeDetailDialog">
+        <div class="dialog-container" @click.stop>
+            <div class="dialog-header">
+                <h3>文件存证详情</h3>
+                <button @click="closeDetailDialog" class="close-btn">×</button>
+            </div>
+            <div class="dialog-content" v-if="currentEvidence">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>文件名:</label>
+                        <span>{{ currentEvidence.fileName }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>文件大小:</label>
+                        <span>{{ formatFileSize(currentEvidence.fileSize) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>分组/项目:</label>
+                        <span>{{ currentEvidence.groupName }}/{{ currentEvidence.projectName }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>文件哈希:</label>
+                        <span class="hash-text">{{ currentEvidence.fileHash }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>DID标识:</label>
+                        <span class="hash-text">{{ currentEvidence.didDocument }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>上链状态:</label>
+                        <span :class="'status-' + currentEvidence.chainStatus">{{ getChainStatusText(currentEvidence.chainStatus) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>上传时间:</label>
+                        <span>{{ formatDateTime(currentEvidence.createdAt) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>文件描述:</label>
+                        <span>{{ currentEvidence.description || '暂无描述' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            userInfo: null,
+            activeTab: 'upload',
+            showQuickPanel: false,
+
+            // 加载状态
+            loading: {
+                singleUpload: false,
+                batchUpload: false,
+                groupSubmit: false,
+                projectSubmit: false
+            },
+
+            // 上传表单
+            uploadForm: {
+                groupId: '',
+                projectId: '',
+                hashAlgorithm: 'SHA256',
+                description: ''
+            },
+
+            batchForm: {
+                hashAlgorithm: 'SHA256',
+                commitMessage: ''
+            },
+
+            // 文件数据
+            selectedFiles: [],
+            isDragOver: false,
+
+            // 分组和项目数据
+            groups: [],
+            projects: [],
+            browseProjects: [],
+
+            // 对话框状态
+            showCreateGroupDialog: false,
+            showCreateProjectDialog: false,
+            showDetailDialog: false,
+            editingGroup: null,
+            editingProject: null,
+
+            // 表单数据
+            groupForm: {
+                groupName: '',
+                groupCode: '',
+                description: ''
+            },
+
+            projectForm: {
+                groupId: '',
+                projectName: '',
+                projectCode: '',
+                description: ''
+            },
+
+            // 筛选条件
+            projectFilter: {
+                groupId: ''
+            },
+
+            browseFilter: {
+                groupId: '',
+                projectId: '',
+                keyword: ''
+            },
+
+            // 数据列表
+            evidenceList: [],
+            currentEvidence: null,
+
+            // 分页
+            pagination: {
+                page: 1,
+                size: 10,
+                total: 0
+            },
+
+            // 统计数据
+            stats: {
+                groupCount: 0,
+                projectCount: 0,
+                fileCount: 0,
+                todayUpload: 0
+            }
+        }
+    },
+    computed: {
+        filteredProjects() {
+            if (!this.projectFilter.groupId) {
+                return this.projects;
+            }
+            return this.projects.filter(project => project.groupId == this.projectFilter.groupId);
+        }
+    },
+    mounted() {
+        this.checkLogin();
+    },
+    methods: {
+        checkLogin() {
+            const userInfo = localStorage.getItem('userInfo');
+            const token = localStorage.getItem('token');
+
+            if (userInfo && token) {
+                this.userInfo = JSON.parse(userInfo);
+
+                // 设置axios默认请求头
+                axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+
+                // 认证完成后加载数据
+                this.loadGroups();
+                this.loadProjects();
+                this.loadStats();
+            } else {
+                window.location.href = '/static/index.html';
+            }
+        },
+
+        goHome() {
+            window.location.href = '/static/index.html';
+        },
+
+        navigateTo(module) {
+            const modulePages = {
+                'code': '/static/code.html',
+                'query': '/static/query.html',
+                'blockchain': '/static/blockchain.html'
+            };
+            if (modulePages[module]) {
+                window.location.href = modulePages[module];
+            }
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/static/index.html';
+        },
+
+        // 加载数据
+        async loadGroups() {
+            try {
+                const response = await axios.get('/api/file-evidence-management/groups');
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    this.groups = response.data.data || [];
+                    console.log('成功加载分组:', this.groups.length + '个');
+                } else {
+                    console.error('加载分组失败:', response.data.message);
+                    this.groups = [];
+                }
+                this.stats.groupCount = this.groups.length;
+            } catch (error) {
+                console.error('加载分组失败:', error);
+                this.groups = [];
+                this.stats.groupCount = 0;
+            }
+        },
+
+        async loadProjects() {
+            try {
+                const response = await axios.get('/api/file-evidence-management/projects');
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    this.projects = response.data.data || [];
+                    console.log('成功加载项目:', this.projects.length + '个');
+                } else {
+                    console.error('加载项目失败:', response.data.message);
+                    this.projects = [];
+                }
+                this.stats.projectCount = this.projects.length;
+            } catch (error) {
+                console.error('加载项目失败:', error);
+                this.projects = [];
+                this.stats.projectCount = 0;
+            }
+        },
+
+        async loadStats() {
+            try {
+                // 从已加载的数据中获取基础统计
+                this.stats.groupCount = this.groups.length;
+                this.stats.projectCount = this.projects.length;
+
+                // 获取文件总数统计
+                const statsResponse = await axios.get('/api/file-evidence/stats');
+                if (statsResponse.data && (statsResponse.data.success || statsResponse.data.code === 200)) {
+                    this.stats.fileCount = statsResponse.data.data.totalFiles || 0;
+                    this.stats.todayUpload = statsResponse.data.data.todayUpload || 0;
+                } else {
+                    // 如果没有统计API，从文件列表获取数量
+                    this.stats.fileCount = 0;
+                    this.stats.todayUpload = 0;
+                }
+            } catch (error) {
+                console.error('加载统计数据失败:', error);
+                this.stats.fileCount = 0;
+                this.stats.todayUpload = 0;
+            }
+        },
+
+        // 文件操作
+        triggerFileSelect() {
+            this.$refs.fileInput.click();
+        },
+
+        handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            this.selectedFiles = files;
+        },
+
+        handleFileDrop(event) {
+            event.preventDefault();
+            this.isDragOver = false;
+            const files = Array.from(event.dataTransfer.files);
+            this.selectedFiles = files;
+        },
+
+        handleDragOver(event) {
+            event.preventDefault();
+            this.isDragOver = true;
+        },
+
+        handleDragLeave() {
+            this.isDragOver = false;
+        },
+
+        clearFiles() {
+            this.selectedFiles = [];
+            this.$refs.fileInput.value = '';
+        },
+
+        removeFile(index) {
+            this.selectedFiles.splice(index, 1);
+        },
+
+        // 上传操作
+        async uploadFiles() {
+            if (this.selectedFiles.length === 0 || !this.uploadForm.projectId) {
+                alert('请选择文件和目标项目');
+                return;
+            }
+
+            // 根据文件数量决定使用单文件或批量上传API
+            if (this.selectedFiles.length === 1) {
+                await this.uploadSingleFile();
+            } else {
+                // 批量上传需要提交信息（使用文件描述作为提交信息）
+                if (!this.uploadForm.description) {
+                    alert('批量上传需要填写文件描述');
+                    return;
+                }
+                await this.uploadBatchFiles();
+            }
+        },
+
+        async uploadSingleFile() {
+            this.loading.singleUpload = true;
+            try {
+                const formData = new FormData();
+                formData.append('file', this.selectedFiles[0]);
+                formData.append('projectId', this.uploadForm.projectId);
+                formData.append('hashAlgorithm', this.uploadForm.hashAlgorithm);
+                formData.append('description', this.uploadForm.description);
+
+                // 调用单文件上传API
+                const response = await axios.post('/api/file-evidence/upload', formData);
+
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    alert('文件上传成功！');
+                    this.clearFiles();
+                    this.uploadForm.description = '';
+                    this.loadEvidenceList();
+                    this.loadStats();
+                } else {
+                    alert('上传失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('文件上传失败：' + error.message);
+            } finally {
+                this.loading.singleUpload = false;
+            }
+        },
+
+        async uploadBatchFiles() {
+            this.loading.batchUpload = true;
+            try {
+                const formData = new FormData();
+                this.selectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+                formData.append('projectId', this.uploadForm.projectId);
+                formData.append('hashAlgorithm', this.uploadForm.hashAlgorithm);
+                formData.append('commitMessage', this.uploadForm.description);
+
+                // 调用批量上传API
+                const response = await axios.post('/api/file-evidence/upload-batch', formData);
+
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    alert(`成功批量上传 ${this.selectedFiles.length} 个文件！`);
+                    this.clearFiles();
+                    this.uploadForm.description = '';
+                    this.loadEvidenceList();
+                    this.loadStats();
+                } else {
+                    alert('批量上传失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('批量上传失败：' + error.message);
+            } finally {
+                this.loading.batchUpload = false;
+            }
+        },
+
+        // 分组项目操作
+        onGroupChange() {
+            this.uploadForm.projectId = '';
+            this.projects = this.projects.filter(p => !this.uploadForm.groupId || p.groupId == this.uploadForm.groupId);
+        },
+
+        switchToBrowseTab() {
+            this.activeTab = 'browse';
+            // 切换到文件浏览标签页时自动加载文件列表
+            this.loadEvidenceList();
+        },
+
+        onBrowseGroupChange() {
+            this.browseFilter.projectId = '';
+            this.browseProjects = this.projects.filter(p => !this.browseFilter.groupId || p.groupId == this.browseFilter.groupId);
+            this.loadEvidenceList();
+        },
+
+        // 分组管理
+        async generateGroupCode() {
+            if (!this.groupForm.groupName) {
+                alert('请先输入分组名称');
+                return;
+            }
+            try {
+                const response = await axios.get('/api/file-evidence-management/code-generate/group', {
+                    params: { groupName: this.groupForm.groupName }
+                });
+                if (response.data.success || response.data.code === 200) {
+                    this.groupForm.groupCode = response.data.data;
+                    alert('分组代码生成成功: ' + response.data.data);
+                } else {
+                    console.error('生成分组代码失败:', response.data.message);
+                    alert('生成分组代码失败: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('生成分组代码失败:', error);
+                alert('生成分组代码失败: ' + (error.response?.data?.message || error.message));
+            }
+        },
+
+        async generateProjectCode() {
+            if (!this.projectForm.projectName) {
+                alert('请先输入项目名称');
+                return;
+            }
+            try {
+                const response = await axios.get('/api/file-evidence-management/code-generate/project', {
+                    params: { projectName: this.projectForm.projectName }
+                });
+                if (response.data.success || response.data.code === 200) {
+                    this.projectForm.projectCode = response.data.data;
+                    alert('项目代码生成成功: ' + response.data.data);
+                } else {
+                    console.error('生成项目代码失败:', response.data.message);
+                    alert('生成项目代码失败: ' + response.data.message);
+                }
+            } catch (error) {
+                console.error('生成项目代码失败:', error);
+                alert('生成项目代码失败: ' + (error.response?.data?.message || error.message));
+            }
+        },
+
+        async submitGroupForm() {
+            if (!this.groupForm.groupName) {
+                alert('请输入分组名称');
+                return;
+            }
+
+            this.loading.groupSubmit = true;
+            try {
+                if (this.editingGroup) {
+                    // 更新分组
+                    const response = await axios.put(`/api/file-evidence-management/groups/${this.editingGroup.id}`, null, {
+                        params: {
+                            groupName: this.groupForm.groupName,
+                            description: this.groupForm.description
+                        }
+                    });
+                    if (response.data && (response.data.success || response.data.code === 200)) {
+                        // 重新加载分组列表确保数据最新
+                        await this.loadGroups();
+                        alert('分组更新成功！');
+                    } else {
+                        alert('更新失败：' + (response.data.message || '未知错误'));
+                    }
+                } else {
+                    // 创建新分组
+                    const response = await axios.post('/api/file-evidence-management/groups', null, {
+                        params: {
+                            groupName: this.groupForm.groupName,
+                            groupCode: this.groupForm.groupCode,
+                            description: this.groupForm.description
+                        }
+                    });
+                    if (response.data && (response.data.success || response.data.code === 200)) {
+                        // 重新加载分组列表确保数据最新
+                        await this.loadGroups();
+                        alert('分组创建成功！');
+                        console.log('新分组创建成功，已重新加载分组列表');
+                    } else {
+                        alert('创建失败：' + (response.data.message || '未知错误'));
+                    }
+                }
+
+                this.closeCreateGroupDialog();
+                this.loadStats();
+            } catch (error) {
+                alert('操作失败：' + error.message);
+            } finally {
+                this.loading.groupSubmit = false;
+            }
+        },
+
+        async submitProjectForm() {
+            if (!this.projectForm.projectName || !this.projectForm.groupId) {
+                alert('请输入项目名称并选择所属分组');
+                return;
+            }
+
+            this.loading.projectSubmit = true;
+            try {
+                if (this.editingProject) {
+                    // 更新项目
+                    const response = await axios.put(`/api/file-evidence-management/projects/${this.editingProject.id}`, null, {
+                        params: {
+                            projectName: this.projectForm.projectName,
+                            description: this.projectForm.description
+                        }
+                    });
+                    if (response.data && (response.data.success || response.data.code === 200)) {
+                        // 重新加载项目列表确保数据最新
+                        await this.loadProjects();
+                        alert('项目更新成功！');
+                    } else {
+                        alert('更新失败：' + (response.data.message || '未知错误'));
+                    }
+                } else {
+                    // 创建新项目
+                    const response = await axios.post('/api/file-evidence-management/projects', null, {
+                        params: {
+                            groupId: this.projectForm.groupId,
+                            projectName: this.projectForm.projectName,
+                            projectCode: this.projectForm.projectCode,
+                            description: this.projectForm.description
+                        }
+                    });
+                    if (response.data && (response.data.success || response.data.code === 200)) {
+                        // 重新加载项目列表确保数据最新
+                        await this.loadProjects();
+                        alert('项目创建成功！');
+                        console.log('新项目创建成功，已重新加载项目列表');
+                    } else {
+                        alert('创建失败：' + (response.data.message || '未知错误'));
+                    }
+                }
+
+                this.closeCreateProjectDialog();
+                this.loadStats();
+            } catch (error) {
+                alert('操作失败：' + error.message);
+            } finally {
+                this.loading.projectSubmit = false;
+            }
+        },
+
+        editGroup(group) {
+            this.editingGroup = group;
+            this.groupForm = { ...group };
+            this.showCreateGroupDialog = true;
+        },
+
+        editProject(project) {
+            this.editingProject = project;
+            this.projectForm = { ...project };
+            this.showCreateProjectDialog = true;
+        },
+
+
+        // 文件浏览
+        async loadEvidenceList() {
+            try {
+                const params = {
+                    page: this.pagination.page,
+                    size: this.pagination.size
+                };
+                // 始终传递 projectId 参数，即使为空也要传递（表示查询所有项目）
+                if (this.browseFilter.projectId) {
+                    params.projectId = this.browseFilter.projectId;
+                } else {
+                    // 当没有选择特定项目时，传递 null 表示查询用户所有文件
+                    params.projectId = null;
+                }
+                if (this.browseFilter.keyword) {
+                    params.keyword = this.browseFilter.keyword;
+                }
+
+                const response = await axios.get('/api/file-evidence/query', { params });
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    this.evidenceList = response.data.data.records || [];
+                    this.pagination.total = response.data.data.total || 0;
+                    console.log('成功加载文件列表:', this.evidenceList.length + '个文件');
+                } else {
+                    console.error('加载文件列表失败:', response.data.message);
+                    this.evidenceList = [];
+                    this.pagination.total = 0;
+                }
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+                this.evidenceList = [];
+                this.pagination.total = 0;
+            }
+        },
+
+
+        // 对话框操作
+        closeCreateGroupDialog() {
+            this.showCreateGroupDialog = false;
+            this.editingGroup = null;
+            this.groupForm = { groupName: '', groupCode: '', description: '' };
+        },
+
+        closeCreateProjectDialog() {
+            this.showCreateProjectDialog = false;
+            this.editingProject = null;
+            this.projectForm = { groupId: '', projectName: '', projectCode: '', description: '' };
+        },
+
+        closeDetailDialog() {
+            this.showDetailDialog = false;
+            this.currentEvidence = null;
+        },
+
+        // 文件操作
+        viewEvidenceDetail(evidence) {
+            this.currentEvidence = evidence;
+            this.showDetailDialog = true;
+        },
+
+        async downloadFile(evidence) {
+            try {
+                const response = await axios.get(`/api/files/download/${evidence.objectName}`, {
+                    responseType: 'blob'
+                });
+
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', evidence.fileName);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('下载失败：' + error.message);
+            }
+        },
+
+        async verifyEvidence(evidence) {
+            try {
+                const response = await axios.get(`/api/file-evidence/verify/${evidence.fileHash}`);
+                if (response.data && (response.data.success || response.data.code === 200)) {
+                    alert(response.data.data ? '文件验证成功，存证记录有效！' : '文件验证失败，存证记录无效！');
+                } else {
+                    alert('验证失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('验证失败：' + error.message);
+            }
+        },
+
+        changePage(page) {
+            if (page < 1 || page > Math.ceil(this.pagination.total / this.pagination.size)) {
+                return;
+            }
+            this.pagination.page = page;
+            this.loadEvidenceList();
+        },
+
+        // 工具函数
+        getGroupName(groupId) {
+            const group = this.groups.find(g => g.id === groupId);
+            return group ? group.groupName : '未知分组';
+        },
+
+
+        getChainStatusText(status) {
+            // 处理数字状态码（后端返回的格式）
+            if (typeof status === 'number') {
+                const numericStatusMap = {
+                    0: '待上链',
+                    1: '上链成功',
+                    2: '上链失败'
+                };
+                return numericStatusMap[status] || '未知状态';
+            }
+
+            // 处理字符串状态（兼容旧格式）
+            const statusMap = {
+                'SUCCESS': '已上链',
+                'PENDING': '上链中',
+                'FAILED': '上链失败'
+            };
+            return statusMap[status] || '未知';
+        },
+
+
+        formatHash(hash) {
+            if (!hash) return '-';
+            return hash.substring(0, 8) + '...' + hash.substring(hash.length - 8);
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        formatDateTime(dateTime) {
+            return new Date(dateTime).toLocaleString('zh-CN');
+        }
+    }
+});
+</script>
+
+<style>
+/* 引入公共样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(90deg, #409eff, #66b1ff);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-left .logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn, .logout-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover, .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 主容器 */
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* 标签页导航 */
+.tab-navigation {
+    display: flex;
+    background: white;
+    border-radius: 8px 8px 0 0;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 0;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tab-btn {
+    padding: 15px 25px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.tab-btn:first-child {
+    border-radius: 8px 0 0 0;
+}
+
+.tab-btn.active {
+    color: #409eff;
+    border-bottom-color: #409eff;
+    background: #f8fbff;
+}
+
+.tab-btn:hover:not(.active) {
+    background: #f5f7fa;
+    color: #409eff;
+}
+
+.quick-actions {
+    padding: 15px 25px;
+}
+
+.quick-panel-btn {
+    background: #409eff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.quick-panel-btn:hover {
+    background: #66b1ff;
+}
+
+/* 标签页内容 */
+.tab-content {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    min-height: 600px;
+}
+
+.section {
+    margin-bottom: 30px;
+}
+
+.section h3 {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 0;
+    border-bottom: 1px solid #dee2e6;
+    color: #2c3e50;
+    font-size: 18px;
+}
+
+/* 选择器容器 */
+.selection-container {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.selection-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #495057;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #409eff;
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.create-btn {
+    background: #67c23a;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-left: 10px;
+    transition: background-color 0.3s;
+}
+
+.create-btn:hover:not(:disabled) {
+    background: #85ce61;
+}
+
+.create-btn:disabled {
+    background: #c0c4cc;
+    cursor: not-allowed;
+}
+
+/* 上传网格 */
+.upload-container {
+    padding: 0;
+}
+
+.upload-container-single {
+    padding: 0;
+}
+
+.upload-card-single {
+    padding: 30px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+}
+
+.upload-card h4 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #fafbfc;
+    margin-bottom: 20px;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: #409eff;
+    background-color: #f0f2ff;
+}
+
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    opacity: 0.7;
+}
+
+.upload-text p {
+    margin-bottom: 8px;
+    color: #666;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #909399;
+}
+
+.file-preview,
+.file-list {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.file-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #e9ecef;
+    gap: 10px;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-icon {
+    font-size: 16px;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.file-size {
+    color: #909399;
+    font-size: 12px;
+}
+
+.remove-btn {
+    background: #f56c6c;
+    color: white;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-options {
+    space-y: 15px;
+}
+
+/* 按钮样式 */
+.primary-btn, .secondary-btn, .refresh-btn, .action-btn, .quick-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.primary-btn {
+    background: #409eff;
+    color: white;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background: #66b1ff;
+}
+
+.primary-btn:disabled {
+    background: #c0c4cc;
+    cursor: not-allowed;
+}
+
+.secondary-btn {
+    background: #909399;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #a6a9ad;
+}
+
+.refresh-btn {
+    background: #17a2b8;
+    color: white;
+}
+
+.refresh-btn:hover {
+    background: #138496;
+}
+
+.action-btn {
+    background: #409eff;
+    color: white;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
+.quick-btn {
+    background: #67c23a;
+    color: white;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.quick-btn:hover {
+    background: #85ce61;
+}
+
+/* 管理页面 */
+.management-header, .browse-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    gap: 20px;
+}
+
+.filter-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.filter-controls select,
+.filter-controls input {
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* 网格布局 */
+.groups-grid, .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+.group-card, .project-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    transition: box-shadow 0.3s;
+}
+
+.group-card:hover, .project-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.group-header, .project-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.group-header h4, .project-header h4 {
+    color: #2c3e50;
+    font-size: 16px;
+    margin: 0;
+}
+
+.group-actions, .project-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+
+.status-success {
+    color: #67c23a;
+    font-weight: 600;
+}
+
+.status-failed {
+    color: #f56c6c;
+    font-weight: 600;
+}
+
+.group-content p, .project-content p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.group-code, .project-code {
+    font-family: monospace;
+    background: #e9ecef;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* 表格样式 */
+.evidence-table {
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+    overflow: hidden;
+}
+
+.table-header {
+    display: grid;
+    background: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 1px solid #dee2e6;
+    font-size: 14px;
+}
+
+.evidence-table .table-header {
+    grid-template-columns: 2fr 1.5fr 1fr 2fr 1.5fr 1.5fr;
+}
+
+.table-row {
+    display: grid;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.3s;
+}
+
+.evidence-table .table-row {
+    grid-template-columns: 2fr 1.5fr 1fr 2fr 1.5fr 1.5fr;
+}
+
+.table-row:hover {
+    background-color: #f8fbff;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.col {
+    padding: 15px 12px;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.hash-text {
+    font-family: monospace;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* 分页 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    gap: 15px;
+}
+
+.page-btn {
+    background: #409eff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.page-btn:disabled {
+    background: #c0c4cc;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #666;
+    font-size: 14px;
+}
+
+/* 快捷面板 */
+.quick-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    padding: 20px;
+    width: 300px;
+    z-index: 1000;
+    border: 1px solid #dee2e6;
+}
+
+.quick-panel-content h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: #f8fbff;
+    border-radius: 6px;
+    border: 1px solid #e7f3ff;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: 700;
+    color: #409eff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: #666;
+}
+
+.quick-actions-section h5 {
+    margin-bottom: 12px;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.quick-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.dialog-header h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+}
+
+.close-btn:hover {
+    background: #f5f7fa;
+}
+
+.dialog-content {
+    padding: 20px;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.code-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.code-input-group input {
+    flex: 1;
+}
+
+.generate-btn {
+    background: #e6a23c;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.generate-btn:hover {
+    background: #ebb563;
+}
+
+.detail-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.detail-item label {
+    font-weight: 600;
+    color: #495057;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.detail-item span {
+    color: #666;
+    word-break: break-all;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .main-container {
+        padding: 10px;
+    }
+
+    .tab-navigation {
+        flex-wrap: wrap;
+    }
+
+    .selection-row {
+        grid-template-columns: 1fr;
+    }
+
+    .upload-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .upload-card {
+        border-right: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .groups-grid, .projects-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}
+</style>
+</body>
+</html>
