@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代码存证 - 区块链存证系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/images/logo.svg" alt="Logo" class="logo-img">
+                <h2>区块链存证系统 - 代码存证</h2>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="nav-buttons">
+                <button @click="goHome()" class="nav-btn">返回主页</button>
+                <button @click="navigateTo('upload')" class="nav-btn">文件存证</button>
+                <button @click="navigateTo('query')" class="nav-btn">查询验证</button>
+                <button @click="navigateTo('blockchain')" class="nav-btn">区块链信息</button>
+            </div>
+            <div class="user-info" v-if="userInfo">
+                <span>{{ userInfo.username }}</span>
+                <button @click="logout" class="logout-btn">退出</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 代码存证概览 -->
+        <div class="section">
+            <h3>💻 代码存证中心</h3>
+            <div class="overview-text">
+                <p>管理代码仓库、上传代码文件并进行区块链存证，确保代码版本的完整性和可追溯性。</p>
+            </div>
+        </div>
+
+        <!-- 仓库管理 -->
+        <div class="section">
+            <h3>仓库管理</h3>
+            <div class="repository-management">
+                <div class="management-grid">
+                    <!-- 创建仓库 -->
+                    <div class="management-card">
+                        <h4>创建新仓库</h4>
+                        <div class="form-container">
+                            <div class="form-group">
+                                <label>分组名称：</label>
+                                <input type="text" v-model="repositoryForm.groupName" placeholder="请输入分组名称">
+                            </div>
+                            <div class="form-group">
+                                <label>项目名称：</label>
+                                <input type="text" v-model="repositoryForm.projectName" placeholder="请输入项目名称">
+                            </div>
+                            <div class="form-group">
+                                <label>项目描述：</label>
+                                <textarea v-model="repositoryForm.description" placeholder="请输入项目描述(可选)" rows="3"></textarea>
+                            </div>
+                            <button @click="createRepository" :disabled="loading.createRepo" class="primary-btn">
+                                {{ loading.createRepo ? '创建中...' : '创建仓库' }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 仓库选择 -->
+                    <div class="management-card">
+                        <h4>
+                            我的仓库
+                            <button @click="loadRepositories" class="refresh-btn-small">刷新</button>
+                        </h4>
+                        <div class="form-container">
+                            <div class="form-group">
+                                <label>选择仓库：</label>
+                                <select v-model="selectedRepository" @change="onRepositoryChange">
+                                    <option value="">请选择仓库</option>
+                                    <option v-for="repo in repositories" :key="repo.id" :value="repo.id">
+                                        {{ repo.groupName }}/{{ repo.projectName }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div v-if="selectedRepository" class="branch-management">
+                                <div class="tab-container">
+                                    <div class="tab-header">
+                                        <button @click="branchTab = 'create'" :class="{ active: branchTab === 'create' }" class="tab-btn">创建分支</button>
+                                        <button @click="branchTab = 'merge'" :class="{ active: branchTab === 'merge' }" class="tab-btn">合并分支</button>
+                                    </div>
+
+                                    <div v-if="branchTab === 'create'" class="tab-content">
+                                        <div class="form-group">
+                                            <input type="text" v-model="branchForm.branchName" placeholder="新分支名称">
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="text" v-model="branchForm.baseBranch" placeholder="基础分支(默认main)">
+                                        </div>
+                                        <button @click="createBranch" :disabled="loading.createBranch" class="success-btn">
+                                            {{ loading.createBranch ? '创建中...' : '创建分支' }}
+                                        </button>
+                                    </div>
+
+                                    <div v-if="branchTab === 'merge'" class="tab-content">
+                                        <div class="form-group">
+                                            <select v-model="mergeForm.sourceBranch">
+                                                <option value="">源分支</option>
+                                                <option v-for="branch in branches" :key="branch.id" :value="branch.branchName">
+                                                    {{ branch.branchName }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <select v-model="mergeForm.targetBranch">
+                                                <option value="">目标分支</option>
+                                                <option v-for="branch in branches" :key="branch.id" :value="branch.branchName">
+                                                    {{ branch.branchName }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <button @click="mergeBranch" :disabled="loading.merge || !mergeForm.sourceBranch || !mergeForm.targetBranch" class="primary-btn">
+                                            {{ loading.merge ? '合并中...' : '合并分支' }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代码上传 -->
+        <div class="section">
+            <h3>代码上传</h3>
+            <div class="upload-container">
+                <div class="upload-grid">
+                    <!-- 拖拽上传区域 -->
+                    <div class="upload-card">
+                        <h4>文件上传</h4>
+                        <div class="upload-area"
+                             @drop="handleDrop"
+                             @dragover="handleDragOver"
+                             @dragleave="handleDragLeave"
+                             :class="{ 'dragover': isDragOver }"
+                             @click="triggerFileSelect">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">
+                                <p>将代码文件拖到此处，或点击选择文件</p>
+                                <p class="upload-hint">支持: .py .java .js .ts .html .css .sql .json .xml .c .cpp .h .go .rs .php .rb .swift .kt .scala .sol</p>
+                                <p class="upload-hint">单文件大小限制：10MB</p>
+                            </div>
+                            <input type="file" ref="fileInput" @change="handleFileSelect" multiple accept=".py,.java,.js,.ts,.html,.css,.sql,.json,.xml,.c,.cpp,.h,.hpp,.go,.rs,.php,.rb,.swift,.kt,.scala,.sol,.vue,.jsx,.tsx" style="display: none;">
+                        </div>
+
+                        <div v-if="fileList.length > 0" class="file-list">
+                            <h5>已选择文件：</h5>
+                            <div v-for="(file, index) in fileList" :key="index" class="file-item">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-size">{{ formatFileSize(file.size) }}</span>
+                                <button @click="removeFile(index)" class="remove-btn">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 上传配置 -->
+                    <div class="upload-card">
+                        <h4>上传配置</h4>
+                        <div class="form-container">
+                            <div class="form-group">
+                                <label>目标仓库：</label>
+                                <select v-model="uploadForm.repositoryId">
+                                    <option value="">请选择仓库</option>
+                                    <option v-for="repo in repositories" :key="repo.id" :value="repo.id">
+                                        {{ repo.groupName }}/{{ repo.projectName }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>目标分支：</label>
+                                <select v-model="uploadForm.branchName">
+                                    <option value="">请选择分支</option>
+                                    <option v-for="branch in branches" :key="branch.id" :value="branch.branchName">
+                                        {{ branch.branchName }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>上传模式：</label>
+                                <div class="radio-group">
+                                    <label class="radio-item">
+                                        <input type="radio" v-model="uploadForm.uploadMode" value="single">
+                                        <span>单文件提交</span>
+                                    </label>
+                                    <label class="radio-item">
+                                        <input type="radio" v-model="uploadForm.uploadMode" value="batch">
+                                        <span>批量提交</span>
+                                    </label>
+                                </div>
+                                <p class="mode-hint">单文件：每个文件单独创建提交；批量：所有文件合并为一次提交</p>
+                            </div>
+                            <div class="form-group">
+                                <label>提交信息：</label>
+                                <textarea v-model="uploadForm.commitMessage" placeholder="请输入提交信息" rows="3"></textarea>
+                            </div>
+                            <div class="action-buttons">
+                                <button @click="uploadCode" :disabled="loading.upload || fileList.length === 0" class="primary-btn">
+                                    {{ loading.upload ? '提交中...' : '提交代码' }}
+                                </button>
+                                <button @click="clearFiles" class="secondary-btn">清空</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 存证记录 -->
+        <div class="section">
+            <h3>代码存证记录</h3>
+            <div class="records-container">
+                <div class="records-table">
+                    <div class="table-header">
+                        <div class="col">文件名</div>
+                        <div class="col">分组/项目</div>
+                        <div class="col">分支</div>
+                        <div class="col">提交哈希</div>
+                        <div class="col">链上状态</div>
+                        <div class="col">存证时间</div>
+                        <div class="col">操作</div>
+                    </div>
+                    <div v-for="record in evidenceList" :key="record.id" class="table-row">
+                        <div class="col">
+                            <div class="file-info">
+                                <span class="file-icon">📄</span>
+                                <span>{{ record.fileName }}</span>
+                            </div>
+                        </div>
+                        <div class="col">{{ record.gitGroupName }}/{{ record.gitProjectName }}</div>
+                        <div class="col">
+                            <span class="branch-tag">{{ record.gitBranchName }}</span>
+                        </div>
+                        <div class="col">
+                            <span class="hash-text">{{ formatHash(record.gitCommitHash) }}</span>
+                        </div>
+                        <div class="col">
+                            <span :class="'status-' + record.chainStatus">{{ getChainStatusText(record.chainStatus) }}</span>
+                        </div>
+                        <div class="col">{{ formatDateTime(record.createdAt) }}</div>
+                        <div class="col">
+                            <div class="action-buttons">
+                                <button @click="viewDetails(record)" class="action-btn">详情</button>
+                                <button @click="downloadCode(record)" class="action-btn">下载</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分页 -->
+                <div class="pagination">
+                    <button @click="changePage(pagination.page - 1)" :disabled="pagination.page <= 1" class="page-btn">上一页</button>
+                    <span class="page-info">第 {{ pagination.page }} 页，共 {{ Math.ceil(pagination.total / pagination.size) }} 页</span>
+                    <button @click="changePage(pagination.page + 1)" :disabled="pagination.page >= Math.ceil(pagination.total / pagination.size)" class="page-btn">下一页</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="section">
+            <h3>统计信息</h3>
+            <div class="stats-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📁</div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ stats.totalRepositories }}</div>
+                            <div class="stat-label">总仓库数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🌿</div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ stats.totalBranches }}</div>
+                            <div class="stat-label">总分支数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ stats.totalCommits }}</div>
+                            <div class="stat-label">总提交数</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🆕</div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ stats.todayCommits }}</div>
+                            <div class="stat-label">今日提交</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情对话框 -->
+    <div v-if="showDetailDialog" class="dialog-overlay" @click="closeDetailDialog">
+        <div class="dialog-container" @click.stop>
+            <div class="dialog-header">
+                <h3>代码存证详情</h3>
+                <button @click="closeDetailDialog" class="close-btn">×</button>
+            </div>
+            <div class="dialog-content" v-if="currentRecord">
+                <div class="detail-item">
+                    <label>文件名:</label>
+                    <span>{{ currentRecord.fileName }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>文件路径:</label>
+                    <span>{{ currentRecord.filePath }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>分组/项目:</label>
+                    <span>{{ currentRecord.gitGroupName }}/{{ currentRecord.gitProjectName }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>分支:</label>
+                    <span>{{ currentRecord.gitBranchName }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>提交哈希:</label>
+                    <span class="hash-text">{{ currentRecord.gitCommitHash }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>文件哈希:</label>
+                    <span class="hash-text">{{ currentRecord.fileHash }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>DID标识:</label>
+                    <span class="hash-text">{{ currentRecord.didDocument }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>链上状态:</label>
+                    <span :class="'status-' + currentRecord.chainStatus">{{ getChainStatusText(currentRecord.chainStatus) }}</span>
+                </div>
+                <div class="detail-item">
+                    <label>存证时间:</label>
+                    <span>{{ formatDateTime(currentRecord.createdAt) }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            userInfo: null,
+
+            // 加载状态
+            loading: {
+                createRepo: false,
+                createBranch: false,
+                merge: false,
+                upload: false,
+                table: false
+            },
+
+            // 仓库表单
+            repositoryForm: {
+                groupName: '',
+                projectName: '',
+                description: ''
+            },
+
+            // 分支表单
+            branchForm: {
+                branchName: '',
+                baseBranch: 'main'
+            },
+
+            // 合并表单
+            mergeForm: {
+                sourceBranch: '',
+                targetBranch: ''
+            },
+
+            // 上传表单
+            uploadForm: {
+                repositoryId: '',
+                branchName: '',
+                uploadMode: 'single',
+                commitMessage: ''
+            },
+
+            // 数据
+            repositories: [],
+            branches: [],
+            selectedRepository: '',
+            branchTab: 'create',
+            fileList: [],
+            isDragOver: false,
+            evidenceList: [],
+
+            // 分页
+            pagination: {
+                page: 1,
+                size: 10,
+                total: 0
+            },
+
+            // 统计
+            stats: {
+                totalRepositories: 0,
+                totalBranches: 0,
+                totalCommits: 0,
+                todayCommits: 0
+            },
+
+            // 对话框
+            showDetailDialog: false,
+            currentRecord: null
+        }
+    },
+    mounted() {
+        this.checkLogin();
+        this.loadRepositories(); // 这里会自动加载分支
+        this.loadEvidenceList();
+        this.loadStats();
+    },
+    methods: {
+        checkLogin() {
+            const userInfo = localStorage.getItem('userInfo');
+            const token = localStorage.getItem('token');
+
+            if (userInfo && token) {
+                this.userInfo = JSON.parse(userInfo);
+                // 设置axios默认请求头
+                axios.defaults.headers.common['Authorization'] = 'Bearer ' + token;
+            } else {
+                window.location.href = '/static/index.html';
+            }
+        },
+
+        goHome() {
+            window.location.href = '/static/index.html';
+        },
+
+        navigateTo(module) {
+            const modulePages = {
+                'upload': '/static/upload.html',
+                'query': '/static/query.html',
+                'blockchain': '/static/blockchain.html'
+            };
+            if (modulePages[module]) {
+                window.location.href = modulePages[module];
+            }
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            window.location.href = '/static/index.html';
+        },
+
+        async createRepository() {
+            if (!this.repositoryForm.groupName || !this.repositoryForm.projectName) {
+                alert('请填写分组名称和项目名称');
+                return;
+            }
+
+            this.loading.createRepo = true;
+            try {
+                const formData = new FormData();
+                formData.append('groupName', this.repositoryForm.groupName);
+                formData.append('projectName', this.repositoryForm.projectName);
+                if (this.repositoryForm.description) {
+                    formData.append('description', this.repositoryForm.description);
+                }
+
+                const response = await axios.post('/api/code/repository', formData);
+                if (response.data.success || response.data.code === 200) {
+                    alert('仓库创建成功！');
+                    this.repositoryForm = { groupName: '', projectName: '', description: '' };
+                    this.loadRepositories(); // 重新加载仓库列表
+                } else {
+                    alert('创建仓库失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('创建仓库失败：' + error.message);
+                console.error('创建仓库失败:', error);
+            } finally {
+                this.loading.createRepo = false;
+            }
+        },
+
+        async loadRepositories() {
+            try {
+                const response = await axios.get('/api/code/repositories');
+                if (response.data.success || response.data.code === 200) {
+                    this.repositories = response.data.data || [];
+
+                    // 如果有选中的仓库，自动加载对应的分支
+                    if (this.selectedRepository) {
+                        this.loadBranches();
+                    }
+                    // 如果没有选中仓库但有可用仓库，自动选择第一个并加载分支
+                    else if (this.repositories.length > 0) {
+                        this.selectedRepository = this.repositories[0].id;
+                        this.loadBranches();
+                    }
+                } else {
+                    console.error('加载仓库失败:', response.data.message);
+                }
+            } catch (error) {
+                console.error('加载仓库失败:', error);
+            }
+        },
+
+        onRepositoryChange() {
+            this.loadBranches();
+        },
+
+        async loadBranches() {
+            if (!this.selectedRepository) {
+                this.branches = [];
+                return;
+            }
+
+            try {
+                const response = await axios.get('/api/code/branches', {
+                    params: { repositoryId: this.selectedRepository }
+                });
+                if (response.data.success || response.data.code === 200) {
+                    this.branches = response.data.data || [];
+                    console.log('分支加载成功，数量:', this.branches.length);
+                } else {
+                    console.error('加载分支失败:', response.data.message);
+                    this.branches = [];
+                }
+            } catch (error) {
+                console.error('加载分支失败:', error);
+                this.branches = [];
+            }
+        },
+
+        async createBranch() {
+            if (!this.branchForm.branchName) {
+                alert('请输入分支名称');
+                return;
+            }
+            if (!this.selectedRepository) {
+                alert('请先选择仓库');
+                return;
+            }
+
+            this.loading.createBranch = true;
+            try {
+                const formData = new FormData();
+                formData.append('repositoryId', this.selectedRepository);
+                formData.append('branchName', this.branchForm.branchName);
+                if (this.branchForm.baseBranch) {
+                    formData.append('baseBranch', this.branchForm.baseBranch);
+                }
+
+                const response = await axios.post('/api/code/branch', formData);
+                if (response.data.success || response.data.code === 200) {
+                    alert('分支创建成功！');
+                    this.branchForm = { branchName: '', baseBranch: 'main' };
+                    this.loadBranches(); // 重新加载分支列表
+                } else {
+                    alert('创建分支失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('创建分支失败：' + error.message);
+                console.error('创建分支失败:', error);
+            } finally {
+                this.loading.createBranch = false;
+            }
+        },
+
+        async mergeBranch() {
+            if (!this.selectedRepository || !this.mergeForm.sourceBranch || !this.mergeForm.targetBranch) {
+                alert('请选择仓库并填写源分支和目标分支');
+                return;
+            }
+
+            this.loading.merge = true;
+            try {
+                const formData = new FormData();
+                formData.append('repositoryId', this.selectedRepository);
+                formData.append('sourceBranch', this.mergeForm.sourceBranch);
+                formData.append('targetBranch', this.mergeForm.targetBranch);
+
+                const response = await axios.post('/api/code/merge', formData);
+                if (response.data.success || response.data.code === 200) {
+                    alert(`分支 ${this.mergeForm.sourceBranch} 已成功合并到 ${this.mergeForm.targetBranch}`);
+                    this.mergeForm = { sourceBranch: '', targetBranch: '' };
+                } else {
+                    alert('合并分支失败：' + (response.data.message || '未知错误'));
+                }
+            } catch (error) {
+                alert('合并分支失败：' + error.message);
+                console.error('合并分支失败:', error);
+            } finally {
+                this.loading.merge = false;
+            }
+        },
+
+        triggerFileSelect() {
+            this.$refs.fileInput.click();
+        },
+
+        handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            this.fileList = [...this.fileList, ...files];
+        },
+
+        handleDrop(event) {
+            event.preventDefault();
+            this.isDragOver = false;
+            const files = Array.from(event.dataTransfer.files);
+            this.fileList = [...this.fileList, ...files];
+        },
+
+        handleDragOver(event) {
+            event.preventDefault();
+            this.isDragOver = true;
+        },
+
+        handleDragLeave() {
+            this.isDragOver = false;
+        },
+
+        removeFile(index) {
+            this.fileList.splice(index, 1);
+        },
+
+        clearFiles() {
+            this.fileList = [];
+            this.$refs.fileInput.value = '';
+        },
+
+        async uploadCode() {
+            if (!this.uploadForm.repositoryId || !this.uploadForm.branchName) {
+                alert('请选择目标仓库和分支');
+                return;
+            }
+
+            if (!this.uploadForm.commitMessage) {
+                alert('请输入提交信息');
+                return;
+            }
+
+            if (this.fileList.length === 0) {
+                alert('请选择要上传的文件');
+                return;
+            }
+
+            this.loading.upload = true;
+            try {
+                if (this.fileList.length === 1) {
+                    // 单文件上传
+                    const formData = new FormData();
+                    formData.append('repositoryId', this.uploadForm.repositoryId);
+                    formData.append('branchName', this.uploadForm.branchName);
+                    formData.append('file', this.fileList[0]);
+                    formData.append('fileName', this.fileList[0].name);
+                    formData.append('commitMessage', this.uploadForm.commitMessage);
+
+                    const response = await axios.post('/api/code/commit', formData);
+                    if (response.data.success || response.data.code === 200) {
+                        alert('代码提交成功！');
+                    } else {
+                        alert('代码提交失败：' + (response.data.message || '未知错误'));
+                    }
+                } else {
+                    // 批量上传
+                    const formData = new FormData();
+                    formData.append('repositoryId', this.uploadForm.repositoryId);
+                    formData.append('branchName', this.uploadForm.branchName);
+                    this.fileList.forEach(file => {
+                        formData.append('files', file);
+                    });
+                    formData.append('commitMessage', this.uploadForm.commitMessage);
+
+                    const response = await axios.post('/api/code/commit-batch', formData);
+                    if (response.data.success || response.data.code === 200) {
+                        alert('批量代码提交成功！');
+                    } else {
+                        alert('批量代码提交失败：' + (response.data.message || '未知错误'));
+                    }
+                }
+
+                this.clearFiles();
+                this.uploadForm.commitMessage = '';
+                this.loadEvidenceList(); // 重新加载存证列表
+            } catch (error) {
+                alert('代码提交失败：' + error.message);
+                console.error('代码提交失败:', error);
+            } finally {
+                this.loading.upload = false;
+            }
+        },
+
+        async loadEvidenceList() {
+            this.loading.table = true;
+            try {
+                const response = await axios.get('/api/code/evidence');
+                if (response.data.success || response.data.code === 200) {
+                    this.evidenceList = response.data.data || [];
+                    this.pagination.total = this.evidenceList.length;
+                } else {
+                    console.error('加载存证记录失败:', response.data.message);
+                }
+            } catch (error) {
+                console.error('加载存证记录失败:', error);
+            } finally {
+                this.loading.table = false;
+            }
+        },
+
+        async loadStats() {
+            try {
+                // 使用系统统计API
+                const response = await axios.get('/api/system/stats');
+                if (response.data.success || response.data.code === 200) {
+                    const data = response.data.data;
+                    this.stats = {
+                        totalRepositories: data.totalCodeRepositories || 0,
+                        totalBranches: data.totalCodeBranches || 0,
+                        totalCommits: data.totalCodeCommits || 0,
+                        todayCommits: data.todayCodeCommits || 0
+                    };
+                } else {
+                    // 如果系统统计API不存在，使用默认值
+                    this.stats = {
+                        totalRepositories: 0,
+                        totalBranches: 0,
+                        totalCommits: 0,
+                        todayCommits: 0
+                    };
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+                // 使用默认值
+                this.stats = {
+                    totalRepositories: 0,
+                    totalBranches: 0,
+                    totalCommits: 0,
+                    todayCommits: 0
+                };
+            }
+        },
+
+        changePage(page) {
+            if (page < 1 || page > Math.ceil(this.pagination.total / this.pagination.size)) {
+                return;
+            }
+            this.pagination.page = page;
+            this.loadEvidenceList();
+        },
+
+        viewDetails(record) {
+            this.currentRecord = record;
+            this.showDetailDialog = true;
+        },
+
+        closeDetailDialog() {
+            this.showDetailDialog = false;
+            this.currentRecord = null;
+        },
+
+        downloadCode(record) {
+            alert('下载功能开发中...');
+        },
+
+        getChainStatusText(status) {
+            // 处理数字状态码（后端返回的格式）
+            if (typeof status === 'number') {
+                const numericStatusMap = {
+                    0: '待上链',
+                    1: '上链成功',
+                    2: '上链失败'
+                };
+                return numericStatusMap[status] || '未知状态';
+            }
+
+            // 处理字符串状态（兼容旧格式）
+            const statusMap = {
+                'success': '已上链',
+                'pending': '上链中',
+                'failed': '上链失败'
+            };
+            return statusMap[status] || '未知';
+        },
+
+        formatHash(hash) {
+            if (!hash) return '-';
+            return hash.substring(0, 8) + '...' + hash.substring(hash.length - 8);
+        },
+
+        formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        },
+
+        formatDateTime(dateTime) {
+            return new Date(dateTime).toLocaleString('zh-CN');
+        }
+    }
+});
+</script>
+
+<style>
+/* 引入公共样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(90deg, #409eff, #66b1ff);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-left .logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.nav-btn, .logout-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover, .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 主容器 */
+.main-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+.section {
+    background: white;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.section h3 {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 0;
+    border-bottom: 1px solid #dee2e6;
+    color: #2c3e50;
+}
+
+.overview-text {
+    padding: 20px;
+    color: #666;
+}
+
+/* 仓库管理 */
+.repository-management {
+    padding: 20px;
+}
+
+.management-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.management-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.management-card h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.refresh-btn-small {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.form-container {
+    space-y: 15px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #495057;
+    font-weight: bold;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+/* 分支管理标签 */
+.branch-management {
+    margin-top: 15px;
+}
+
+.tab-container {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.tab-header {
+    display: flex;
+    background: #f8f9fa;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+    background: white;
+    border-bottom-color: #409eff;
+    color: #409eff;
+}
+
+.tab-content {
+    padding: 15px;
+    background: white;
+}
+
+/* 按钮样式 */
+.primary-btn, .success-btn, .secondary-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.primary-btn {
+    background: #409eff;
+    color: white;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background: #66b1ff;
+}
+
+.success-btn {
+    background: #67c23a;
+    color: white;
+}
+
+.success-btn:hover:not(:disabled) {
+    background: #85ce61;
+}
+
+.secondary-btn {
+    background: #909399;
+    color: white;
+}
+
+.secondary-btn:hover {
+    background: #a6a9ad;
+}
+
+.primary-btn:disabled,
+.success-btn:disabled {
+    background: #c0c4cc;
+    cursor: not-allowed;
+}
+
+/* 上传区域 */
+.upload-container {
+    padding: 20px;
+}
+
+.upload-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.upload-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+.upload-card h4 {
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: white;
+}
+
+.upload-area:hover,
+.upload-area.dragover {
+    border-color: #409eff;
+    background-color: #f0f2ff;
+}
+
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.upload-text p {
+    margin-bottom: 8px;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: #909399;
+}
+
+.file-list {
+    margin-top: 15px;
+    background: white;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.file-list h5 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+}
+
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-name {
+    flex: 1;
+    font-weight: bold;
+}
+
+.file-size {
+    color: #909399;
+    font-size: 12px;
+    margin-right: 10px;
+}
+
+.remove-btn {
+    background: #f56c6c;
+    color: white;
+    border: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+/* 单选按钮 */
+.radio-group {
+    display: flex;
+    gap: 20px;
+}
+
+.radio-item {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.radio-item input {
+    width: auto;
+    margin-right: 8px;
+}
+
+.mode-hint {
+    font-size: 12px;
+    color: #909399;
+    margin-top: 8px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+/* 表格样式 */
+.records-container {
+    padding: 20px;
+}
+
+.records-table {
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 1fr 1.2fr 1fr 1.3fr 1fr;
+    background: #f8f9fa;
+    font-weight: bold;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 1.5fr 1.5fr 1fr 1.2fr 1fr 1.3fr 1fr;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+.col {
+    padding: 12px;
+    display: flex;
+    align-items: center;
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+}
+
+.file-icon {
+    margin-right: 8px;
+}
+
+.branch-tag {
+    background: #e7f3ff;
+    color: #409eff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.hash-text {
+    font-family: monospace;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.status-success {
+    color: #67c23a;
+    font-weight: bold;
+}
+
+.status-pending {
+    color: #e6a23c;
+    font-weight: bold;
+}
+
+.status-failed {
+    color: #f56c6c;
+    font-weight: bold;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.action-btn {
+    background: #409eff;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.action-btn:hover {
+    opacity: 0.8;
+}
+
+/* 分页 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+.page-btn {
+    background: #409eff;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.page-btn:disabled {
+    background: #c0c4cc;
+    cursor: not-allowed;
+}
+
+.page-info {
+    color: #606266;
+}
+
+/* 统计信息 */
+.stats-container {
+    padding: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.stat-icon {
+    font-size: 32px;
+    margin-right: 15px;
+}
+
+.stat-info {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #409eff;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+/* 对话框样式 */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.dialog-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.dialog-content {
+    padding: 20px;
+}
+
+.detail-item {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.detail-item label {
+    font-weight: bold;
+    width: 100px;
+    flex-shrink: 0;
+}
+</style>
+</body>
+</html>

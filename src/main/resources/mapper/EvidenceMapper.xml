@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.evidence.mapper.EvidenceMapper">
+
+    <!-- 查询验证页面使用：显示所有类型的存证记录 -->
+    <select id="selectEvidencePage" resultType="com.evidence.entity.FileEvidence">
+        SELECT * FROM file_evidence
+        WHERE user_id = #{userId}
+        <if test="fileName != null and fileName != ''">
+            AND file_name LIKE CONCAT('%', #{fileName}, '%')
+        </if>
+        <if test="fileHash != null and fileHash != ''">
+            AND file_hash = #{fileHash}
+        </if>
+        <if test="transactionHash != null and transactionHash != ''">
+            AND transaction_hash = #{transactionHash}
+        </if>
+        <if test="blockNumber != null">
+            AND block_number = #{blockNumber}
+        </if>
+        <if test="chainStatus != null">
+            AND chain_status = #{chainStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND created_at >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND created_at &lt;= #{endDate}
+        </if>
+        <if test="contentType != null and contentType != ''">
+            <choose>
+                <when test="contentType == 'FILE,TEXT'">
+                    AND content_type IN ('FILE', 'TEXT')
+                </when>
+                <otherwise>
+                    AND content_type = #{contentType}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 文件存证浏览页面使用：排除CODE类型的记录 -->
+    <select id="selectFileEvidencePage" resultType="com.evidence.entity.FileEvidence">
+        SELECT * FROM file_evidence
+        WHERE user_id = #{userId}
+        AND content_type != 'CODE'
+        <if test="fileName != null and fileName != ''">
+            AND file_name LIKE CONCAT('%', #{fileName}, '%')
+        </if>
+        <if test="fileHash != null and fileHash != ''">
+            AND file_hash = #{fileHash}
+        </if>
+        <if test="transactionHash != null and transactionHash != ''">
+            AND transaction_hash = #{transactionHash}
+        </if>
+        <if test="blockNumber != null">
+            AND block_number = #{blockNumber}
+        </if>
+        <if test="chainStatus != null">
+            AND chain_status = #{chainStatus}
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND created_at >= #{startDate}
+        </if>
+        <if test="endDate != null and endDate != ''">
+            AND created_at &lt;= #{endDate}
+        </if>
+        <if test="contentType != null and contentType != ''">
+            <choose>
+                <when test="contentType == 'FILE,TEXT'">
+                    AND content_type IN ('FILE', 'TEXT')
+                </when>
+                <otherwise>
+                    AND content_type = #{contentType}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="projectId != null">
+            AND project_id = #{projectId}
+        </if>
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>

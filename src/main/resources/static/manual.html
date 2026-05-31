@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>使用手册 - 区块链存证系统</title>
+    <link rel="stylesheet" href="/static/css/manual.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <button @click="goHome" class="back-btn">← 返回主页</button>
+            <h2>使用手册</h2>
+        </div>
+        <div class="header-right">
+            <div class="search-box">
+                <input type="text" v-model="searchKeyword" placeholder="搜索手册内容..." class="search-input">
+                <button @click="searchContent" class="search-btn">🔍</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="main-container">
+        <!-- 侧边栏目录 -->
+        <div class="sidebar">
+            <div class="toc-header">目录</div>
+            <div class="toc-list">
+                <div class="toc-item" :class="{active: activeSection === 'overview'}" @click="scrollToSection('overview')">
+                    <span class="toc-icon">📖</span>
+                    系统概述
+                </div>
+                <div class="toc-item" :class="{active: activeSection === 'quickstart'}" @click="scrollToSection('quickstart')">
+                    <span class="toc-icon">🚀</span>
+                    快速入门
+                </div>
+                <div class="toc-item" :class="{active: activeSection === 'modules'}" @click="scrollToSection('modules')">
+                    <span class="toc-icon">🔧</span>
+                    功能模块
+                </div>
+                <div class="toc-item toc-sub-item" :class="{active: activeSection === 'file-evidence'}" @click="scrollToSection('file-evidence')">
+                    <span class="toc-icon">📁</span>
+                    文件存证
+                </div>
+                <div class="toc-item toc-sub-item" :class="{active: activeSection === 'code-evidence'}" @click="scrollToSection('code-evidence')">
+                    <span class="toc-icon">💻</span>
+                    代码存证
+                </div>
+                <div class="toc-item toc-sub-item" :class="{active: activeSection === 'query-verify'}" @click="scrollToSection('query-verify')">
+                    <span class="toc-icon">🔍</span>
+                    查询验证
+                </div>
+                <div class="toc-item toc-sub-item" :class="{active: activeSection === 'blockchain-info'}" @click="scrollToSection('blockchain-info')">
+                    <span class="toc-icon">⛓️</span>
+                    区块链信息
+                </div>
+                <div class="toc-item toc-sub-item" :class="{active: activeSection === 'did-tools'}" @click="scrollToSection('did-tools')">
+                    <span class="toc-icon">🔧</span>
+                    DID工具箱
+                </div>
+                <div class="toc-item" :class="{active: activeSection === 'rules'}" @click="scrollToSection('rules')">
+                    <span class="toc-icon">📋</span>
+                    上传存证规则
+                </div>
+                <div class="toc-item" :class="{active: activeSection === 'guide'}" @click="scrollToSection('guide')">
+                    <span class="toc-icon">💡</span>
+                    操作指南
+                </div>
+                <div class="toc-item" :class="{active: activeSection === 'faq'}" @click="scrollToSection('faq')">
+                    <span class="toc-icon">❓</span>
+                    常见问题
+                </div>
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content" ref="content">
+            <!-- 系统概述 -->
+            <section id="overview" class="content-section">
+                <h2>系统概述</h2>
+                <div class="content-block">
+                    <h3>区块链存证系统介绍</h3>
+                    <p>区块链存证系统是基于FISCO BCOS区块链技术构建的数字存证平台，为用户提供安全、可信、不可篡改的数字化存证服务。系统支持多种类型的数据存证，包括文件存证、代码存证和策略存证等。</p>
+                </div>
+
+                <div class="content-block">
+                    <h3>核心功能特性</h3>
+                    <ul>
+                        <li><strong>多类型存证：</strong>支持文件、代码、策略等多种数据类型的存证</li>
+                        <li><strong>DID身份认证：</strong>基于去中心化身份标识的用户身份管理</li>
+                        <li><strong>区块链存储：</strong>利用区块链技术确保数据不可篡改</li>
+                        <li><strong>实时验证：</strong>提供快速便捷的存证验证功能</li>
+                        <li><strong>智能合约：</strong>自动化执行存证逻辑，确保操作透明可信</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h3>安全性保障</h3>
+                    <ul>
+                        <li><strong>加密存储：</strong>采用SHA256等加密算法确保数据安全</li>
+                        <li><strong>权限控制：</strong>基于DID的细粒度权限管理</li>
+                        <li><strong>分布式存储：</strong>多节点备份，防止单点故障</li>
+                        <li><strong>时间戳服务：</strong>提供可信的时间证明</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 快速入门 -->
+            <section id="quickstart" class="content-section">
+                <h2>快速入门</h2>
+                <div class="content-block">
+                    <h3>用户注册登录指南</h3>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>用户注册</h4>
+                                <p>访问系统主页，点击"立即注册"按钮，填写用户名、密码、真实姓名等基本信息完成注册。</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>用户登录</h4>
+                                <p>使用注册的用户名和密码登录系统，登录成功后系统将自动分配DID身份标识。</p>
+                            </div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>完善资料</h4>
+                                <p>点击个人资料，完善邮箱等信息，查看并记录您的DID标识。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <h3>DID身份标识说明</h3>
+                    <p>DID（Decentralized Identifier）是去中心化身份标识，格式为：<code>did:evidence:[16位十六进制字符]</code></p>
+                    <p>DID具有以下特点：</p>
+                    <ul>
+                        <li>全球唯一性：每个用户拥有唯一的DID标识</li>
+                        <li>自主控制：用户完全控制自己的身份信息</li>
+                        <li>可验证性：支持密码学验证，确保身份真实性</li>
+                        <li>跨平台性：可在不同系统间流通使用</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h3>界面布局介绍</h3>
+                    <ul>
+                        <li><strong>头部导航：</strong>显示系统标题、用户信息和操作按钮</li>
+                        <li><strong>功能导航：</strong>主要功能模块的快速入口</li>
+                        <li><strong>系统状态：</strong>实时显示区块链状态和存证统计</li>
+                        <li><strong>最近活动：</strong>用户近期操作记录</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 功能模块详解 -->
+            <section id="modules" class="content-section">
+                <h2>功能模块详解</h2>
+
+                <div id="file-evidence" class="content-block">
+                    <h3>文件存证</h3>
+                    <h4>支持的文件格式</h4>
+                    <p>系统支持多种文件格式的存证，包括但不限于：</p>
+                    <ul>
+                        <li>文档类：PDF, DOC, DOCX, TXT, MD</li>
+                        <li>图片类：JPG, PNG, GIF, BMP, SVG</li>
+                        <li>压缩包：ZIP, RAR, 7Z</li>
+                        <li>其他格式：CSV, JSON, XML, LOG</li>
+                    </ul>
+
+                    <h4>上传步骤详解</h4>
+                    <div class="step-list">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">选择文件并填写存证信息</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">系统计算文件哈希值</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">提交到区块链网络</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-content">生成存证凭证</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="code-evidence" class="content-block">
+                    <h3>代码存证</h3>
+                    <h4>Git仓库连接方式</h4>
+                    <ul>
+                        <li>HTTPS连接：使用用户名密码认证</li>
+                        <li>SSH连接：使用SSH密钥认证</li>
+                        <li>本地仓库：直接上传代码文件</li>
+                    </ul>
+
+                    <h4>代码版本管理</h4>
+                    <p>系统支持Git版本控制，可以记录代码的提交历史、分支信息和变更记录。</p>
+                </div>
+
+                <div id="query-verify" class="content-block">
+                    <h3>查询验证</h3>
+                    <h4>存证记录搜索方法</h4>
+                    <ul>
+                        <li>按文件哈希值搜索</li>
+                        <li>按存证时间范围搜索</li>
+                        <li>按文件类型筛选</li>
+                        <li>按用户DID搜索</li>
+                    </ul>
+                </div>
+
+                <div id="blockchain-info" class="content-block">
+                    <h3>区块链信息</h3>
+                    <p>提供区块链网络的实时状态信息，包括区块高度、网络状态、节点信息等。</p>
+                </div>
+
+                <div id="did-tools" class="content-block">
+                    <h3>DID工具箱</h3>
+                    <p>提供DID相关的工具功能，包括DID生成、验证、文档管理等。</p>
+                </div>
+            </section>
+
+            <!-- 上传存证规则 -->
+            <section id="rules" class="content-section">
+                <h2>上传存证规则</h2>
+
+                <div class="content-block">
+                    <h3>代码类存证</h3>
+                    <ol>
+                        <li><strong>简洁概括：</strong>简洁概括提交的核心内容和代码变更的目的</li>
+                        <li><strong>说明性质：</strong>说明代码提交的性质：增加新功能、修复bug、更新README、重构代码、性能优化、添加或修改测试代码等</li>
+                        <li><strong>规范表述：</strong>尽量以动词开头，如添加、修复、优化等；避免模糊表述，拒绝"修改代码"这类无意义的备注，应明确"修复XXX代码"</li>
+                        <li><strong>单一功能：</strong>一个提交对应一个完整的功能或修复，避免"混合提交"（如同时包含添加新功能和修复bug），否则备注难以清晰描述</li>
+                    </ol>
+                </div>
+
+                <div class="content-block">
+                    <h3>文件类存证</h3>
+                    <ol>
+                        <li><strong>核心内容：</strong>简洁概括提交的核心内容，详细信息分条描述</li>
+                        <li><strong>存证目的：</strong>简述存证的目的，如用于XXX存证等</li>
+                        <li><strong>文件类型：</strong>明确存证文件的类型，便于分类查询：合同、代码、日志等</li>
+                        <li><strong>扩展信息：</strong>可根据业务需求适当扩展元素，如文件涉及的关联主体、时间相关、业务编号等</li>
+                    </ol>
+                </div>
+
+                <div class="content-block">
+                    <h3>策略类存证</h3>
+
+                    <h4>1. 提交目的（一句话，带量化目标）</h4>
+                    <p>用动词+量化目标起笔：</p>
+                    <ul>
+                        <li>例：提升日度收益回撤比（Calmar）≥10%</li>
+                        <li>例：降低滑点成本≤0.5tick</li>
+                        <li>例：提高胜率+3pp</li>
+                        <li>例：缩短均值回归持仓时长-20%</li>
+                    </ul>
+
+                    <h4>2. 提交性质（单一变更，避免混合）</h4>
+                    <p>仅选其一：</p>
+                    <ul>
+                        <li>新增策略/新增因子/参数调优/风控优化</li>
+                        <li>执行优化（撮合/滑点/成交算法）</li>
+                        <li>数据替换/模型更新/Agent逻辑更新</li>
+                        <li>回测器性能优化/文档更新/测试补充/缺陷修复</li>
+                    </ul>
+                    <p>例：新增功能：加入"旗形双突破"入场；风控优化：引入波动自适应双止盈；执行优化：L2盘口跟随下单。</p>
+
+                    <h4>3. 变更点（以策略逻辑为中心，拒绝"修改代码"空话）</h4>
+                    <p>条列"做了什么→带来什么效果"：</p>
+                    <ul>
+                        <li><strong>入场/出场/加减仓规则变化：</strong>触发条件、阈值、窗口、滞后/前瞻避免、是否盘中触发</li>
+                        <li><strong>风控：</strong>止损/止盈/回撤、持仓上限、风暴开关（熔断日/夜盘规避）</li>
+                        <li><strong>模型/Agent：</strong>版本、特征、训练区间、超参、探索率/温度/奖励函数关键改动</li>
+                        <li><strong>数据：</strong>来源、频率、清洗与对齐、无未来函数验证（无泄露证据）</li>
+                    </ul>
+
+                    <h4>4. 必备"效果证据"（最少要给的东西）</h4>
+                    <ul>
+                        <li><strong>资金曲线（基准对比）：</strong>新旧两条，同样费用/滑点/交易所时间</li>
+                        <li><strong>核心指标：</strong>年化、最大回撤、夏普、卡玛、胜率、盈亏比、交易笔数</li>
+                        <li><strong>泄露/过拟合检查：</strong>禁用未来数据、标签时序、数据漂移报告</li>
+                        <li><strong>可复核材料：</strong>结果CSV（交易明细+汇总）、图表PNG、运行清单JSON</li>
+                    </ul>
+
+                    <h4>5. 可不放代码的替代材料（必须提供）</h4>
+                    <ul>
+                        <li><strong>策略意图卡：</strong>信号来源（价格/盘口/跨期/跨品/因子/模型/Agent）、入场/出场、风控、执行假设（滑点/费用/撮合）</li>
+                        <li><strong>关键参数表：</strong>窗口、阈值、过滤器、风险参数</li>
+                        <li><strong>结果证据：</strong>第4条所有图表与CSV/JSON</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 操作指南 -->
+            <section id="guide" class="content-section">
+                <h2>操作指南</h2>
+
+                <div class="content-block">
+                    <h3>常见操作步骤</h3>
+                    <div class="guide-item">
+                        <h4>文件存证操作</h4>
+                        <ol>
+                            <li>登录系统，进入文件存证页面</li>
+                            <li>选择要存证的文件</li>
+                            <li>填写存证描述信息</li>
+                            <li>确认文件信息和哈希值</li>
+                            <li>提交存证请求</li>
+                            <li>等待区块链确认</li>
+                            <li>获取存证凭证</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <h3>最佳实践建议</h3>
+                    <ul>
+                        <li>定期备份重要存证记录</li>
+                        <li>妥善保管DID身份信息</li>
+                        <li>遵循存证规范填写描述信息</li>
+                        <li>及时验证存证结果</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h3>注意事项说明</h3>
+                    <ul>
+                        <li>存证操作不可逆，请谨慎操作</li>
+                        <li>确保网络连接稳定</li>
+                        <li>文件大小不超过系统限制</li>
+                        <li>保护好账户密码和DID信息</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 常见问题 -->
+            <section id="faq" class="content-section">
+                <h2>常见问题</h2>
+
+                <div class="content-block">
+                    <h3>登录问题解决</h3>
+                    <div class="faq-item">
+                        <h4>Q: 忘记密码怎么办？</h4>
+                        <p>A: 请联系系统管理员重置密码，或通过找回密码功能进行重置。</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Q: DID登录失败？</h4>
+                        <p>A: 检查DID格式是否正确，确保格式为 did:evidence:[16位十六进制字符]。</p>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <h3>文件上传失败处理</h3>
+                    <div class="faq-item">
+                        <h4>Q: 文件上传失败？</h4>
+                        <p>A: 检查文件大小是否超限、网络连接是否稳定、文件格式是否支持。</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Q: 哈希值计算错误？</h4>
+                        <p>A: 刷新页面重新上传，确保文件完整性，检查文件是否损坏。</p>
+                    </div>
+                </div>
+
+                <div class="content-block">
+                    <h3>验证失败原因分析</h3>
+                    <div class="faq-item">
+                        <h4>Q: 存证验证失败？</h4>
+                        <p>A: 确认哈希值输入正确、存证记录存在、区块链网络正常。</p>
+                    </div>
+                    <div class="faq-item">
+                        <h4>Q: 时间戳验证不通过？</h4>
+                        <p>A: 检查系统时间是否同步、区块链时间是否准确。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 页面底部 -->
+            <div class="content-footer">
+                <p>© 2024 区块链存证系统 - 使用手册</p>
+                <p>如有问题请联系系统管理员</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/manual.js"></script>
+</body>
+</html>

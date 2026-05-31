@@ -1,0 +1,890 @@
+/* src/main/resources/static/css/style.css */
+
+/* 代码存证模块样式 */
+.repository-card, .branch-card, .code-upload-card {
+    margin-bottom: 20px;
+}
+
+.repository-card .el-card__header,
+.branch-card .el-card__header,
+.code-upload-card .el-card__header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.code-upload-area {
+    border: 2px dashed #d9d9d9;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    transition: border-color 0.3s;
+    background-color: #fafafa;
+}
+
+.code-upload-area:hover {
+    border-color: #409EFF;
+    background-color: #ecf5ff;
+}
+
+.code-upload-area .el-upload-dragger {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    width: 100%;
+    height: auto;
+    padding: 20px;
+}
+
+.code-upload-area .el-upload-dragger:hover {
+    background-color: transparent;
+}
+
+.stat-card {
+    text-align: center;
+    border-radius: 8px;
+}
+
+.stat-card .el-card__body {
+    padding: 20px;
+}
+
+.stat-content {
+    color: white;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+    font-weight: normal;
+}
+
+.evidence-detail-dialog .el-message-box {
+    width: 600px;
+}
+
+.evidence-detail-dialog .el-message-box__content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* 文件列表样式优化 */
+.el-upload-list__item {
+    border-radius: 4px;
+    border: 1px solid #e6e6e6;
+}
+
+.el-upload-list__item:hover {
+    background-color: #f5f7fa;
+}
+
+/* 表格样式优化 */
+.el-table .el-table__row:hover {
+    background-color: #f5f7fa;
+}
+
+.el-table .el-table__row .el-tag {
+    border-radius: 12px;
+    padding: 0 8px;
+    height: 24px;
+    line-height: 24px;
+}
+
+/* 按钮组样式 */
+.el-button-group .el-button {
+    margin-left: 0;
+    margin-right: 8px;
+}
+
+.el-button-group .el-button:last-child {
+    margin-right: 0;
+}
+
+/* 响应式适配 */
+@media (max-width: 768px) {
+    .repository-card,
+    .branch-card {
+        margin-bottom: 15px;
+    }
+    
+    .code-upload-area {
+        padding: 15px;
+    }
+    
+    .stat-value {
+        font-size: 24px;
+    }
+}
+
+/* 全局样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    background-color: #f0f2f5;
+    line-height: 1.6;
+}
+
+/* 清除默认样式 */
+ul, ol {
+    list-style: none;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* 头部样式 */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 24px;
+    height: 60px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+.logo-img {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+}
+
+.logo h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+}
+
+/* 导航菜单样式 */
+.nav-menu {
+    background: transparent !important;
+    border: none !important;
+    margin-right: 20px;
+}
+
+.nav-menu .el-menu-item {
+    color: rgba(255, 255, 255, 0.8) !important;
+    border: none !important;
+    height: 40px;
+    line-height: 40px;
+    margin: 0 10px;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.nav-menu .el-menu-item:hover,
+.nav-menu .el-menu-item.is-active {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 用户下拉菜单 */
+.user-dropdown {
+    color: white;
+    cursor: pointer;
+}
+
+.el-dropdown-link {
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s;
+}
+
+.el-dropdown-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 登录页面样式 */
+.login-main {
+    padding: 0;
+    height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.login-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-size: cover;
+    opacity: 0.1;
+}
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+.login-card {
+    width: 420px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.login-header {
+    text-align: center;
+    padding: 20px 0 10px;
+}
+
+.login-logo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+}
+
+.login-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.login-header p {
+    margin: 8px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.login-form {
+    padding: 20px 30px 10px;
+}
+
+.login-button {
+    width: 100%;
+    height: 44px;
+    font-size: 16px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s;
+}
+
+.login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.login-tips {
+    padding: 20px 30px 30px;
+}
+
+/* 主内容区域 */
+.main-content {
+    padding: 24px;
+    background-color: #f0f2f5;
+    min-height: calc(100vh - 60px);
+}
+
+.main-tabs {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.main-tabs .el-tabs__header {
+    margin: 0;
+    background: #fafafa;
+    border-radius: 8px 8px 0 0;
+}
+
+.main-tabs .el-tabs__content {
+    padding: 24px;
+}
+
+.tab-content {
+    min-height: 600px;
+}
+
+/* 卡片样式 */
+.el-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    border: none;
+    transition: all 0.3s;
+}
+
+.el-card:hover {
+    box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.15);
+}
+
+.el-card__header {
+    background-color: #fafafa;
+    border-bottom: 1px solid #ebeef5;
+    font-weight: 600;
+    color: #333;
+}
+
+.card-header-right {
+    float: right;
+    margin-top: -2px;
+}
+
+/* 上传卡片样式 */
+.upload-card {
+    margin-bottom: 20px;
+}
+
+.upload-dragger {
+    width: 100%;
+}
+
+.upload-dragger .el-upload-dragger {
+    width: 100%;
+    height: 180px;
+    border: 2px dashed #d9d9d9;
+    border-radius: 8px;
+    background-color: #fafafa;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-dragger .el-upload-dragger:hover {
+    border-color: #409eff;
+    background-color: #f5f7fa;
+}
+
+.upload-dragger .el-upload-dragger.is-dragover {
+    border-color: #409eff;
+    background-color: rgba(64, 158, 255, 0.1);
+}
+
+.upload-dragger .el-icon-upload {
+    font-size: 48px;
+    color: #c0c4cc;
+    margin-bottom: 16px;
+    transition: all 0.3s;
+}
+
+.upload-dragger:hover .el-icon-upload {
+    color: #409eff;
+}
+
+.upload-form {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #fafafa;
+    border-radius: 8px;
+}
+
+/* 查询卡片样式 */
+.query-card {
+    margin-bottom: 20px;
+}
+
+.query-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.query-form .el-form-item {
+    margin-bottom: 16px;
+}
+
+/* 表格样式 */
+.el-table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.el-table th {
+    background-color: #fafafa;
+    color: #333;
+    font-weight: 600;
+}
+
+.el-table .cell {
+    padding: 8px 12px;
+}
+
+.text-muted {
+    color: #999;
+}
+
+/* 分页样式 */
+.pagination {
+    margin-top: 20px;
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* 区块链信息卡片 */
+.blockchain-card,
+.stats-card {
+    height: 280px;
+}
+
+.blockchain-info,
+.stats-info {
+    padding: 20px 0;
+}
+
+.info-item {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.info-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.info-value {
+    font-size: 18px;
+    color: #333;
+    font-weight: 600;
+}
+
+.contract-address {
+    font-size: 12px;
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.stat-number {
+    font-size: 32px;
+    color: #409eff;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.stat-label {
+    font-size: 14px;
+    color: #666;
+}
+
+/* 搜索结果样式 */
+.search-result {
+    margin-top: 20px;
+}
+
+.search-result pre {
+    background-color: #f5f5f5;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    font-size: 12px;
+    max-height: 300px;
+    overflow: auto;
+    font-family: 'Courier New', monospace;
+}
+
+/* 对话框样式 */
+.dialog-footer {
+    text-align: right;
+}
+
+.el-dialog {
+    border-radius: 8px;
+}
+
+.el-dialog__header {
+    background-color: #fafafa;
+    border-bottom: 1px solid #ebeef5;
+    border-radius: 8px 8px 0 0;
+}
+
+/* 标签样式 */
+.el-tag {
+    border-radius: 4px;
+}
+
+.el-tag--success {
+    background-color: #f0f9ff;
+    border-color: #c6f6d5;
+    color: #22c55e;
+}
+
+.el-tag--warning {
+    background-color: #fffbeb;
+    border-color: #fed7aa;
+    color: #f59e0b;
+}
+
+.el-tag--danger {
+    background-color: #fef2f2;
+    border-color: #fecaca;
+    color: #ef4444;
+}
+
+/* 链接样式 */
+.el-link {
+    font-weight: normal;
+}
+
+.el-link:hover {
+    text-decoration: underline;
+}
+
+/* 按钮样式 */
+.el-button {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.el-button--primary {
+    background: linear-gradient(135deg, #409eff 0%, #1890ff 100%);
+    border-color: #409eff;
+}
+
+.el-button--primary:hover {
+    background: linear-gradient(135deg, #66b1ff 0%, #40a9ff 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+}
+
+.el-button--success {
+    background: linear-gradient(135deg, #67c23a 0%, #52c41a 100%);
+    border-color: #67c23a;
+}
+
+.el-button--success:hover {
+    background: linear-gradient(135deg, #85ce61 0%, #73d13d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(103, 194, 58, 0.3);
+}
+
+.el-button--warning {
+    background: linear-gradient(135deg, #e6a23c 0%, #fa8c16 100%);
+    border-color: #e6a23c;
+}
+
+.el-button--warning:hover {
+    background: linear-gradient(135deg, #ebb563 0%, #ffa940 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(230, 162, 60, 0.3);
+}
+
+/* 输入框样式 */
+.el-input__inner {
+    border-radius: 6px;
+    border: 1px solid #dcdfe6;
+    transition: all 0.3s;
+}
+
+.el-input__inner:focus {
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+}
+
+/* 选择器样式 */
+.el-select .el-input__inner {
+    cursor: pointer;
+}
+
+/* 上传组件样式 */
+.el-upload__tip {
+    color: #999;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* 表单样式 */
+.el-form-item__label {
+    font-weight: 500;
+    color: #333;
+}
+
+/* 描述列表样式 */
+.el-descriptions {
+    margin-top: 20px;
+}
+
+.el-descriptions__label {
+    font-weight: 600;
+    color: #333;
+}
+
+/* 警告框样式 */
+.el-alert {
+    border-radius: 6px;
+    border: none;
+}
+
+.el-alert--info {
+    background-color: #f4f4f5;
+    color: #909399;
+}
+
+.el-alert--success {
+    background-color: #f0f9ff;
+    color: #67c23a;
+}
+
+.el-alert--warning {
+    background-color: #fdf6ec;
+    color: #e6a23c;
+}
+
+.el-alert--error {
+    background-color: #fef0f0;
+    color: #f56c6c;
+}
+
+/* 加载状态 */
+.el-loading-mask {
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* 空状态 */
+.empty-state {
+    text-align: center;
+    padding: 60px 0;
+    color: #999;
+}
+
+.empty-state i {
+    font-size: 64px;
+    margin-bottom: 16px;
+    color: #c0c4cc;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .header {
+        padding: 0 16px;
+    }
+
+    .main-content {
+        padding: 16px;
+    }
+
+    .main-tabs .el-tabs__content {
+        padding: 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        height: auto;
+        padding: 12px;
+    }
+
+    .header-right {
+        margin-top: 12px;
+    }
+
+    .nav-menu {
+        margin-right: 0;
+        margin-bottom: 12px;
+    }
+
+    .login-card {
+        width: 90%;
+        max-width: 400px;
+        margin: 20px;
+    }
+
+    .query-form {
+        flex-direction: column;
+    }
+
+    .query-form .el-form-item {
+        width: 100%;
+    }
+
+    .el-table__body-wrapper {
+        overflow-x: auto;
+    }
+
+    .pagination {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 8px;
+    }
+
+    .main-tabs .el-tabs__content {
+        padding: 12px;
+    }
+
+    .upload-form {
+        padding: 12px;
+    }
+
+    .blockchain-card,
+    .stats-card {
+        height: auto;
+        min-height: 200px;
+    }
+
+    .stat-number {
+        font-size: 24px;
+    }
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 自定义工具类 */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.mb-20 {
+    margin-bottom: 20px;
+}
+
+.mt-20 {
+    margin-top: 20px;
+}
+
+.p-20 {
+    padding: 20px;
+}
+
+.border-radius-8 {
+    border-radius: 8px;
+}
+
+/* 打印样式 */
+@media print {
+    .header,
+    .el-button,
+    .pagination {
+        display: none !important;
+    }
+
+    .main-content {
+        padding: 0;
+    }
+
+    .el-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}

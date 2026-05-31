@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册 - 区块链存证系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* 头部导航 */
+        .header {
+            background: linear-gradient(90deg, #409eff, #66b1ff);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header-left .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        /* 主容器 */
+        .main-container {
+            max-width: 500px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* 注册卡片 */
+        .register-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border: none;
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid #ebeef5;
+        }
+
+        .register-title {
+            color: #2c3e50;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .register-subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .register-form {
+            padding: 30px;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #409eff;
+            box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 5px;
+        }
+
+        .error-message {
+            color: #f56c6c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .success-message {
+            color: #67c23a;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: #409eff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #66b1ff;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: #909399;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: #a6a9ad;
+        }
+
+        /* 注册成功页面 */
+        .register-success {
+            text-align: center;
+            padding: 30px;
+        }
+
+        .success-title {
+            color: #67c23a;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .success-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* DID 显示样式 */
+        .did-display {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #409eff;
+        }
+
+        .did-label {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .did-value {
+            font-family: monospace;
+            font-size: 13px;
+            color: #606266;
+            word-break: break-all;
+            background: white;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #e4e7ed;
+            line-height: 1.5;
+        }
+
+        .copy-btn {
+            background: #e6a23c;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #ebb563;
+        }
+
+        /* 底部链接 */
+        .register-footer {
+            padding: 20px 30px 30px;
+            text-align: center;
+            border-top: 1px solid #ebeef5;
+            background: #f8f9fa;
+        }
+
+        .register-footer a {
+            color: #409eff;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 10px;
+        }
+
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 20px;
+            }
+
+            .main-container {
+                margin: 20px auto;
+                padding: 0 10px;
+            }
+
+            .register-header,
+            .register-form,
+            .register-footer {
+                padding: 20px;
+            }
+
+            .register-title {
+                font-size: 20px;
+            }
+
+            .form-control {
+                font-size: 16px; /* 防止iOS放大 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/images/logo.svg" alt="Logo" class="logo-img">
+                <h2>区块链存证系统 - 用户注册</h2>
+            </div>
+        </div>
+        <div class="header-right">
+            <a href="/" class="nav-btn">返回首页</a>
+            <a href="/" class="nav-btn">立即登录</a>
+        </div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <div class="register-container">
+            <div class="register-header">
+                <h1 class="register-title">用户注册</h1>
+                <p class="register-subtitle">创建您的区块链身份</p>
+            </div>
+        <form id="registerForm" class="register-form">
+            <div class="form-group">
+                <input id="username" name="username" class="form-control" placeholder="用户名" required />
+                <div class="form-hint">用户名长度2-30个字符，支持字母、数字、下划线、中划线和中文</div>
+                <div id="usernameError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <input id="realName" name="realName" class="form-control" placeholder="真实姓名" required />
+                <div class="form-hint">请输入您的真实姓名，2-30个字符</div>
+                <div id="realNameError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <input id="email" name="email" type="email" class="form-control" placeholder="邮箱地址（可选）" />
+                <div class="form-hint">邮箱将用于生成您的唯一DID标识</div>
+                <div id="emailError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <input id="password" name="password" type="password" class="form-control" placeholder="密码" required />
+                <div class="form-hint">密码长度6-100个字符</div>
+                <div id="passwordError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <input id="confirmPassword" name="confirmPassword" type="password" class="form-control" placeholder="确认密码" required />
+                <div id="confirmPasswordError" class="error-message" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn-primary">立即注册</button>
+                <button type="button" class="btn-secondary" onclick="window.location.href='/'">返回首页</button>
+            </div>
+        </form>
+
+        <div id="registerResult" style="display: none;">
+            <div class="register-success">
+                <div class="success-icon">✓</div>
+                <h3 class="success-title">注册成功！</h3>
+                <p class="success-subtitle">您的账号已创建，DID标识已生成</p>
+            </div>
+
+            <div id="didDisplay" class="did-display">
+                <div class="did-label">您的DID标识</div>
+                <div class="did-value">
+                    <span id="didValue"></span>
+                </div>
+                <button type="button" class="copy-btn" onclick="copyDID()">复制DID</button>
+                <div class="form-hint">请妥善保存您的DID标识，这是您在区块链存证系统中的唯一身份凭证</div>
+            </div>
+
+            <div class="text-center">
+                <button type="button" class="btn-primary" onclick="window.location.href='/'">前往首页登录</button>
+            </div>
+        </div>
+
+            <div class="register-footer">
+                <p><a href="/">返回首页</a> | <a href="/">已有账号？立即登录</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 表单验证
+        function validateForm() {
+            let isValid = true;
+
+            // 清除之前的错误信息
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+                el.textContent = '';
+            });
+
+            const username = document.getElementById('username').value.trim();
+            const realName = document.getElementById('realName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // 用户名验证
+            if (!username) {
+                showError('usernameError', '用户名不能为空');
+                isValid = false;
+            } else if (username.length < 2 || username.length > 30) {
+                showError('usernameError', '用户名长度必须在2-30个字符之间');
+                isValid = false;
+            } else if (!/^[a-zA-Z0-9_\-\u4e00-\u9fa5]+$/.test(username)) {
+                showError('usernameError', '用户名只能包含字母、数字、下划线、中划线和中文');
+                isValid = false;
+            }
+
+            // 真实姓名验证
+            if (!realName) {
+                showError('realNameError', '真实姓名不能为空');
+                isValid = false;
+            } else if (realName.length < 2 || realName.length > 30) {
+                showError('realNameError', '真实姓名长度必须在2-30个字符之间');
+                isValid = false;
+            }
+
+            // 邮箱验证（可选）
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('emailError', '邮箱格式不正确');
+                isValid = false;
+            } else if (email && email.length > 100) {
+                showError('emailError', '邮箱长度不能超过100个字符');
+                isValid = false;
+            }
+
+            // 密码验证
+            if (!password) {
+                showError('passwordError', '密码不能为空');
+                isValid = false;
+            } else if (password.length < 6 || password.length > 100) {
+                showError('passwordError', '密码长度必须在6-100个字符之间');
+                isValid = false;
+            }
+
+            // 确认密码验证
+            if (!confirmPassword) {
+                showError('confirmPasswordError', '确认密码不能为空');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                showError('confirmPasswordError', '两次输入的密码不一致');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        function showError(elementId, message) {
+            const errorEl = document.getElementById(elementId);
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        // 复制DID功能
+        function copyDID() {
+            const didValue = document.getElementById('didValue').textContent;
+            navigator.clipboard.writeText(didValue).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '已复制';
+                copyBtn.style.background = '#67c23a';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '#e6a23c';
+                }, 2000);
+            }).catch(() => {
+                // 兼容性处理
+                const textArea = document.createElement('textarea');
+                textArea.value = didValue;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('DID已复制到剪贴板');
+            });
+        }
+
+        // 注册表单提交
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            const formData = {
+                username: document.getElementById('username').value.trim(),
+                realName: document.getElementById('realName').value.trim(),
+                email: document.getElementById('email').value.trim() || null,
+                password: document.getElementById('password').value,
+                confirmPassword: document.getElementById('confirmPassword').value
+            };
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result && (result.code === 200 || result.success)) {
+                    // 注册成功
+                    const data = result.data || {};
+
+                    // 显示注册结果
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('registerResult').style.display = 'block';
+                    document.getElementById('didValue').textContent = data.did || 'DID生成失败';
+
+                } else {
+                    // 注册失败，显示错误信息
+                    const errorMessage = (result && (result.message || result.msg)) || '注册失败';
+                    alert(errorMessage);
+                }
+
+            } catch (error) {
+                console.error('注册请求失败:', error);
+                alert('注册失败，请稍后重试');
+            }
+        });
+
+        // 实时验证用户名
+        document.getElementById('username').addEventListener('blur', function() {
+            const username = this.value.trim();
+            if (username && (username.length < 2 || username.length > 30 || !/^[a-zA-Z0-9_\-\u4e00-\u9fa5]+$/.test(username))) {
+                showError('usernameError', '用户名格式不正确');
+            } else {
+                document.getElementById('usernameError').style.display = 'none';
+            }
+        });
+
+        // 实时验证邮箱
+        document.getElementById('email').addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showError('emailError', '邮箱格式不正确');
+            } else {
+                document.getElementById('emailError').style.display = 'none';
+            }
+        });
+
+        // 实时验证密码确认
+        document.getElementById('confirmPassword').addEventListener('blur', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            if (confirmPassword && password !== confirmPassword) {
+                showError('confirmPasswordError', '两次输入的密码不一致');
+            } else {
+                document.getElementById('confirmPasswordError').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

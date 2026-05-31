@@ -1,0 +1,93 @@
+spring:
+  profiles:
+    active: dev
+  application:
+    name: blockchain-evidence-system
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+  thymeleaf:
+    cache: false
+    encoding: UTF-8
+    mode: HTML
+    prefix: classpath:/templates/
+    suffix: .html
+    check-template: false  # 关闭模板检查，避免启动时错误
+    check-template-location: false
+  # 全局字符编码配置
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  # Web服务器编码配置
+  web:
+    resources:
+      static-locations: classpath:/static/
+      cache:
+        cachecontrol:
+          max-age: 0
+  # Jackson JSON编码配置
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: GMT+8
+    date-format: yyyy-MM-dd HH:mm:ss
+  
+  # Redis配置
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 1
+    timeout: 5000ms
+    jedis:
+      pool:
+        max-active: 10
+        max-wait: -1ms
+        max-idle: 8
+        min-idle: 0
+
+# FISCO BCOS配置
+fisco:
+  config-file: config.toml
+  group-id: 1
+  contract-address: 0xa5080283f65ef624a25374195ede4e028ed0f29e
+  current-account: 0x9d6037dcc8b3253c3f2a295eeac2d9fde804543c     # 当前账户地址
+
+# MinIO配置
+minio:
+  endpoint: http://127.0.0.1:9000          # MinIO服务地址
+  console-url: http://127.0.0.1:9001       # MinIO控制台地址
+  access-key: minioadmin                        # 访问用户名
+  secret-key: minioadmin                     # 访问密码
+  bucket-name: evidence-files              # 默认存储桶名称
+  url-expiry: 604800                       # 文件URL过期时间（秒）7天
+
+# Git配置
+git:
+  base-path: /root/data/git-repos               # Git仓库基础路径
+  username:                                # Git用户名（可选，用于推送到远程）
+  password:                                # Git密码（可选，用于推送到远程）
+
+# 日志配置
+logging:
+  level:
+    com.evidence: debug
+    org.fisco.bcos: info
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 服务器配置
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8
+
+app:
+  auth:
+    skip: true   # 仅开发环境启用，生产不要开

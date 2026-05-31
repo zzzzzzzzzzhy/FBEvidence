@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>文件上传 - 区块链存证系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/text-upload.css" rel="stylesheet">
+</head>
+<body>
+<div id="uploadApp" class="standalone-page">
+    <!-- 页头 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="el-icon-upload2"></i> 文件上传存证</h1>
+            <p>将您的重要文件上传到区块链进行永久存证</p>
+            <el-button type="text" @click="goBack"><i class="el-icon-arrow-left"></i> 返回主页</el-button>
+        </div>
+    </div>
+
+    <div class="upload-container">
+        <el-card shadow="hover" class="upload-main-card">
+            <div slot="header">
+                <span>选择要存证的文件</span>
+                <el-tag size="small" type="info" style="float:right;">支持：PDF、DOC、XLS、TXT、图片等格式</el-tag>
+            </div>
+
+            <!-- 核心上传区域（手动上传模式） -->
+            <el-upload
+                    ref="uploader"
+                    class="standalone-upload"
+                    :action="uploadAction"
+                    :headers="uploadHeaders"
+                    :data="uploadData"
+                    :auto-upload="false"
+                    :limit="1"
+                    :file-list="fileList"
+                    :on-change="onFileChange"
+                    :on-remove="onFileRemove"
+                    :on-progress="onUploadProgress"
+                    :on-success="onSuccess"
+                    :on-error="onError"
+                    :before-upload="beforeUpload"
+                    name="file"
+                    drag
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif">
+
+                <div class="upload-dragger-content">
+                    <i class="el-icon-upload upload-icon"></i>
+                    <div class="el-upload__text">将文件拖拽到此处，或<em>点击选择文件</em></div>
+                    <div class="upload-tips">
+                        <p>• 单个文件大小不超过 100MB</p>
+                        <p>• 支持 PDF、DOC、DOCX、XLS、XLSX、TXT、JPG、PNG、GIF</p>
+                        <p>• 文件将被计算哈希值并永久存储在区块链上</p>
+                    </div>
+                </div>
+            </el-upload>
+
+            <!-- 文字内容编辑区域 -->
+            <div class="text-content-section">
+                <h4>文字内容存证</h4>
+                <p class="section-tip">您可以直接输入文字内容进行存证，支持代码、文档等任意文本信息</p>
+                <el-input
+                    v-model="textContent"
+                    type="textarea"
+                    :autosize="{ minRows: 6, maxRows: 15 }"
+                    placeholder="请输入要存证的文字内容（支持文本、代码、JSON等）&#10;&#10;示例：&#10;- 重要协议条款&#10;- 代码片段&#10;- 创意文案&#10;- 技术文档&#10;等等..."
+                    maxlength="50000"
+                    show-word-limit
+                    class="text-editor">
+                </el-input>
+                <div v-if="textContent.trim()" class="text-info">
+                    <el-tag size="small" type="success">
+                        文字长度: {{ textContent.trim().length }} 字符
+                    </el-tag>
+                    <el-tag size="small" type="info" style="margin-left: 10px;">
+                        预计哈希: {{ textContent.trim().length > 0 ? 'SHA256' : '无' }}
+                    </el-tag>
+                </div>
+            </div>
+
+            <!-- 分隔线 -->
+            <el-divider>
+                <el-tag type="info">文件上传 或 文字内容，二选一即可</el-tag>
+            </el-divider>
+
+            <!-- 文件信息 -->
+            <div v-if="hasFile" class="file-info-section">
+                <h4>文件信息</h4>
+                <el-descriptions :column="2" border>
+                    <el-descriptions-item label="文件名">{{ currentFile.name }}</el-descriptions-item>
+                    <el-descriptions-item label="文件大小">{{ formatFileSize(currentFile.size) }}</el-descriptions-item>
+                    <el-descriptions-item label="文件类型">{{ currentFile.raw && currentFile.raw.type || '未知' }}</el-descriptions-item>
+                    <el-descriptions-item label="最后修改">{{ formatDate(currentFile.raw && currentFile.raw.lastModified) }}</el-descriptions-item>
+                </el-descriptions>
+            </div>
+
+            <!-- 参数配置 + 操作 -->
+            <div class="upload-config-section">
+                <h4>存证配置</h4>
+                <el-form :model="uploadData" label-width="120px">
+                    <el-form-item label="文件描述：">
+                        <el-input v-model="uploadData.description"
+                                  type="textarea" :rows="3"
+                                  placeholder="请输入文件描述（可选）"
+                                  maxlength="500" show-word-limit />
+                    </el-form-item>
+
+                    <el-form-item label="哈希算法：">
+                        <el-radio-group v-model="uploadData.hashAlgorithm">
+                            <el-radio label="SHA256">SHA256（国际标准）</el-radio>
+                        </el-radio-group>
+                    </el-form-item>
+
+                    <el-form-item>
+                        <el-button type="primary"
+                                   :loading="uploadLoading"
+                                   :disabled="!canUpload"
+                                   @click="startUpload">
+                            <i class="el-icon-upload2"></i> 开始上传存证
+                        </el-button>
+                        <el-button @click="clearFiles"><i class="el-icon-delete"></i> 清空文件</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
+
+            <!-- 上传进度 -->
+            <div v-if="uploadLoading" class="upload-progress-section">
+                <h4>上传进度</h4>
+                <el-progress :percentage="uploadProgress" :status="uploadStatus" :stroke-width="20" />
+                <p class="progress-text">{{ progressText }}</p>
+            </div>
+        </el-card>
+
+        <!-- 最近上传记录（可选） -->
+        <el-card shadow="hover" style="margin-top:20px;">
+            <div slot="header">
+                <span>最近上传记录</span>
+                <el-button style="float:right;" type="text" @click="refreshHistory"><i class="el-icon-refresh"></i></el-button>
+            </div>
+            <el-table :data="uploadHistory" v-loading="historyLoading">
+                <el-table-column prop="fileName" label="文件名" min-width="200" />
+                <el-table-column prop="fileSize" label="大小" width="120">
+                    <template slot-scope="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
+                </el-table-column>
+                <el-table-column prop="chainStatus" label="状态" width="120">
+                    <template slot-scope="scope">
+                        <el-tag :type="getStatusType(scope.row.chainStatus)" size="small">{{ getStatusText(scope.row.chainStatus) }}</el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="createdAt" label="上传时间" width="180">
+                    <template slot-scope="scope">{{ formatDate(scope.row.createdAt) }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="160">
+                    <template slot-scope="scope">
+                        <el-button size="mini" @click="viewDetails(scope.row)">查看详情</el-button>
+                        <el-button size="mini" type="success" @click="verifyFile(scope.row.fileHash)">验证</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-card>
+    </div>
+</div>
+
+<!-- 依赖与业务脚本 -->
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.24.0/axios.min.js"></script>
+<script src="/static/js/upload.js"></script>
+</body>
+</html>

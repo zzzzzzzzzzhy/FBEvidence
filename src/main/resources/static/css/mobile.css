@@ -1,0 +1,411 @@
+/* 移动端基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+    background-color: #f7f8fa;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 导航栏样式 */
+.van-nav-bar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.van-nav-bar__title {
+    color: white !important;
+    font-weight: 600;
+}
+
+.van-nav-bar .van-icon {
+    color: white !important;
+}
+
+/* 标签页样式 */
+.van-tabs__nav {
+    background-color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.van-tab {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.van-tab--active {
+    color: #667eea;
+}
+
+.van-tabs__line {
+    background-color: #667eea;
+}
+
+/* 内容区域 */
+.tab-content {
+    padding: 16px;
+    min-height: calc(100vh - 140px);
+}
+
+/* 上传组件样式 */
+.van-uploader {
+    margin-bottom: 16px;
+}
+
+.van-uploader__upload {
+    border: 2px dashed #dcdfe6;
+    border-radius: 8px;
+    background-color: #fafbfc;
+    transition: all 0.3s;
+}
+
+.van-uploader__upload:active {
+    border-color: #667eea;
+    background-color: rgba(102, 126, 234, 0.1);
+}
+
+.van-uploader__upload-icon {
+    font-size: 24px;
+    color: #969799;
+}
+
+.van-uploader__upload-text {
+    margin-top: 8px;
+    color: #969799;
+    font-size: 12px;
+}
+
+/* 表单字段样式 */
+.van-field {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    background-color: white;
+}
+
+.van-field__label {
+    color: #323233;
+    font-weight: 500;
+}
+
+.van-field__control {
+    color: #323233;
+}
+
+.van-field__control::placeholder {
+    color: #c8c9cc;
+}
+
+/* 按钮样式 */
+.upload-actions {
+    margin-top: 20px;
+}
+
+.van-button--primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    height: 44px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.van-button--primary:active {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* 搜索框样式 */
+.van-search {
+    padding: 12px 16px;
+    background-color: white;
+    border-bottom: 1px solid #ebedf0;
+}
+
+.van-search__content {
+    border-radius: 20px;
+    background-color: #f7f8fa;
+}
+
+.van-field__left-icon {
+    color: #969799;
+}
+
+/* 卡片样式 */
+.van-card {
+    margin-bottom: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: none;
+    overflow: hidden;
+}
+
+.van-card__header {
+    padding: 12px 16px 8px;
+}
+
+.van-card__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #323233;
+    line-height: 1.4;
+}
+
+.van-card__desc {
+    font-size: 12px;
+    color: #969799;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.van-card__footer {
+    padding: 8px 16px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.van-card__tag {
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* 单元格组样式 */
+.van-cell-group {
+    margin-bottom: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.van-cell-group__title {
+    padding: 16px 16px 8px;
+    color: #323233;
+    font-size: 14px;
+    font-weight: 600;
+    background-color: #f7f8fa;
+}
+
+.van-cell {
+    border-bottom: 1px solid #f7f8fa;
+}
+
+.van-cell:last-child {
+    border-bottom: none;
+}
+
+.van-cell__title {
+    color: #323233;
+    font-weight: 500;
+}
+
+.van-cell__value {
+    color: #646566;
+}
+
+/* 标签样式 */
+.van-tag {
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 6px;
+}
+
+.van-tag--success {
+    background-color: #f0f9ff;
+    color: #07c160;
+    border-color: #b3e5fc;
+}
+
+.van-tag--warning {
+    background-color: #fff7e6;
+    color: #ff8f00;
+    border-color: #ffcc80;
+}
+
+.van-tag--danger {
+    background-color: #fff0f0;
+    color: #f44336;
+    border-color: #ffcdd2;
+}
+
+/* 列表样式 */
+.van-list {
+    padding: 0 16px;
+}
+
+.van-list__finished-text {
+    color: #969799;
+    font-size: 12px;
+    text-align: center;
+    padding: 16px;
+}
+
+.van-list__loading {
+    text-align: center;
+    padding: 16px;
+}
+
+/* 弹出层样式 */
+.van-popup {
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+}
+
+.van-picker {
+    border-radius: 16px 16px 0 0;
+}
+
+.van-picker__toolbar {
+    background-color: #f7f8fa;
+    border-bottom: 1px solid #ebedf0;
+}
+
+/* 详情弹出层 */
+.detail-content {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #ebedf0;
+}
+
+.detail-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #323233;
+}
+
+.detail-header .van-icon {
+    font-size: 20px;
+    color: #969799;
+}
+
+.detail-actions {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #ebedf0;
+}
+
+/* 信息页面样式 */
+.info-actions {
+    margin-top: 24px;
+    padding: 0 16px;
+}
+
+.van-button--danger {
+    background-color: #ff4757;
+    border-color: #ff4757;
+    border-radius: 8px;
+    height: 44px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* 加载状态 */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #969799;
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 空状态 */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #969799;
+}
+
+.empty-state .empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+}
+
+.empty-state .empty-text {
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* 错误状态 */
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #ff4757;
+}
+
+.error-state .error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.error-state .error-text {
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* 响应式处理 */
+@media (max-width: 320px) {
+    .tab-content {
+        padding: 12px;
+    }
+
+    .van-button {
+        font-size: 14px;
+        height: 40px;
+    }
+
+    .detail-content {
+        padding: 16px;
+    }
+}
+
+/* 安全区域适配 */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .van-tabbar {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .van-popup--bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}

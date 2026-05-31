@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>区块链存证系统 - 主页</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app">
+    <!-- 头部导航 -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">
+                <img src="/static/images/logo.svg" alt="Logo" class="logo-img">
+                <h2>区块链存证系统</h2>
+            </div>
+        </div>
+        <div class="header-right" v-if="userInfo">
+            <div class="user-info">
+                <div class="user-details">
+                    <div class="user-name">欢迎，{{ userInfo.realName || userInfo.username }}</div>
+                    <div class="user-did" v-if="userInfo.did">
+                        DID: {{ userInfo.did }}
+                        <button @click="copyDID" class="copy-did-btn" title="复制DID">📋</button>
+                    </div>
+                </div>
+                <div class="user-actions">
+                    <button @click="showProfile" class="profile-btn">个人资料</button>
+                    <button @click="logout" class="logout-btn">退出登录</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="main-container">
+        <!-- 功能导航区域 -->
+        <div class="nav-section">
+            <h3>功能导航</h3>
+            <div class="nav-grid">
+                <div class="nav-card" @click="navigateTo('upload')">
+                    <div class="nav-icon">📁</div>
+                    <h4>文件存证</h4>
+                    <p>上传文件并进行区块链存证</p>
+                </div>
+                <div class="nav-card" @click="navigateTo('code')">
+                    <div class="nav-icon">💻</div>
+                    <h4>代码存证</h4>
+                    <p>代码仓库管理和版本存证</p>
+                </div>
+                <div class="nav-card" @click="navigateTo('query')">
+                    <div class="nav-icon">🔍</div>
+                    <h4>查询验证</h4>
+                    <p>查询和验证存证记录</p>
+                </div>
+                <div class="nav-card" @click="navigateTo('blockchain')">
+                    <div class="nav-icon">⛓️</div>
+                    <h4>区块链信息</h4>
+                    <p>查看区块链网络状态信息</p>
+                </div>
+                <div class="nav-card" @click="navigateTo('did-tools')">
+                    <div class="nav-icon">🔧</div>
+                    <h4>DID工具箱</h4>
+                    <p>DID验证、生成和管理工具</p>
+                </div>
+                <div class="nav-card" @click="navigateTo('manual')">
+                    <div class="nav-icon">📚</div>
+                    <h4>使用手册</h4>
+                    <p>系统功能说明和操作指南</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 系统状态区域 -->
+        <div class="status-section">
+            <h3>系统状态</h3>
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-title">区块链状态</div>
+                    <div class="status-value status-online">在线</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-title">当前区块高度</div>
+                    <div class="status-value">{{ blockHeight }}</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-title">总存证数量</div>
+                    <div class="status-value">{{ totalEvidence }}</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-title">今日存证</div>
+                    <div class="status-value">{{ todayEvidence }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 最近活动区域 -->
+        <div class="activity-section">
+            <h3>最近活动</h3>
+            <div class="activity-list">
+                <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
+                    <div class="activity-icon">{{ activity.icon }}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.title }}</div>
+                        <div class="activity-time">{{ activity.time }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 登录对话框 -->
+    <div v-if="!userInfo" class="login-overlay" @click.self="closeLoginDialog">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-logo">🔐</div>
+                <h3>用户登录</h3>
+                <p class="login-subtitle">欢迎使用区块链存证系统</p>
+                <button @click="closeLoginDialog" class="close-btn">×</button>
+            </div>
+            <form @submit.prevent="handleLogin" class="login-form">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="input-icon">👤</i>
+                        <input type="text" v-model="loginForm.username" placeholder="用户名或DID" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <i class="input-icon">🔒</i>
+                        <input type="password" v-model="loginForm.password" placeholder="密码" required>
+                    </div>
+                </div>
+                <button type="submit" class="login-btn" :disabled="loginLoading">
+                    <span v-if="loginLoading" class="loading-spinner">⟳</span>
+                    {{ loginLoading ? '登录中...' : '立即登录' }}
+                </button>
+                <div class="login-links">
+                    <a href="/static/register.html" class="register-link">没有账号？立即注册</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 个人资料对话框 -->
+    <div v-if="showProfileDialog" class="profile-overlay" @click="closeProfile">
+        <div class="profile-container" @click.stop>
+            <div class="profile-header">
+                <h3>个人资料</h3>
+                <button @click="closeProfile" class="close-btn">×</button>
+            </div>
+            <div class="profile-content" v-if="userInfo">
+                <div class="profile-item">
+                    <label>用户名：</label>
+                    <span>{{ userInfo.username }}</span>
+                </div>
+                <div class="profile-item">
+                    <label>真实姓名：</label>
+                    <span>{{ userInfo.realName || '未设置' }}</span>
+                </div>
+                <div class="profile-item">
+                    <label>邮箱：</label>
+                    <span>{{ userInfo.email || '未设置' }}</span>
+                </div>
+                <div class="profile-item">
+                    <label>DID标识：</label>
+                    <div class="did-field">
+                        <span class="did-value">{{ userInfo.did || '未生成' }}</span>
+                        <button v-if="userInfo.did" @click="copyDID" class="copy-btn">复制</button>
+                        <button v-if="userInfo.did" @click="validateDID" class="validate-btn">验证</button>
+                    </div>
+                </div>
+                <div class="profile-item">
+                    <label>注册时间：</label>
+                    <span>{{ formatDate(userInfo.createdAt) }}</span>
+                </div>
+                <div class="profile-item">
+                    <label>账号状态：</label>
+                    <span class="status-active">正常</span>
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button @click="refreshUserInfo" class="refresh-btn">刷新信息</button>
+                <button @click="closeProfile" class="close-profile-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            userInfo: null,
+            loginForm: {
+                username: '',
+                password: ''
+            },
+            loginLoading: false,
+            showProfileDialog: false,
+            blockHeight: 1024,
+            totalEvidence: 156,
+            todayEvidence: 12,
+            recentActivities: [
+                { id: 1, icon: '📁', title: '文件存证完成', time: '2分钟前' },
+                { id: 2, icon: '💻', title: '代码上传成功', time: '15分钟前' },
+                { id: 3, icon: '🔍', title: '验证查询请求', time: '1小时前' },
+                { id: 4, icon: '⛓️', title: '区块链同步', time: '3小时前' }
+            ]
+        }
+    },
+    mounted() {
+        this.checkLogin();
+    },
+    methods: {
+        async checkLogin() {
+            const token = localStorage.getItem('token');
+            const userInfo = localStorage.getItem('userInfo');
+
+            if (token && userInfo) {
+                try {
+                    // 验证token有效性并获取最新用户信息
+                    const response = await axios.get('/api/auth/userinfo', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+
+                    if (response.data && (response.data.code === 200 || response.data.success)) {
+                        this.userInfo = response.data.data;
+                        localStorage.setItem('userInfo', JSON.stringify(this.userInfo));
+                    } else {
+                        // Token无效，清除本地存储
+                        this.logout();
+                    }
+                } catch (error) {
+                    console.error('验证登录状态失败:', error);
+                    // 如果API调用失败，尝试使用本地存储的用户信息
+                    try {
+                        this.userInfo = JSON.parse(userInfo);
+                    } catch {
+                        this.logout();
+                    }
+                }
+            }
+        },
+
+        async handleLogin() {
+            this.loginLoading = true;
+            try {
+                const response = await axios.post('/api/auth/login', {
+                    username: this.loginForm.username.trim(),
+                    password: this.loginForm.password
+                });
+
+                const result = response.data;
+                if (result && (result.code === 200 || result.success)) {
+                    const data = result.data || {};
+
+                    // 保存token和用户信息
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+
+                    this.userInfo = data;
+                    this.loginForm = { username: '', password: '' };
+
+                    alert('登录成功！');
+                } else {
+                    throw new Error(result.message || result.msg || '登录失败');
+                }
+            } catch (error) {
+                console.error('登录失败:', error);
+                alert('登录失败：' + (error.response?.data?.message || error.message || '请稍后重试'));
+            } finally {
+                this.loginLoading = false;
+            }
+        },
+
+        logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userInfo');
+            this.userInfo = null;
+            this.showProfileDialog = false;
+        },
+
+        closeLoginDialog() {
+            // 关闭登录对话框的方法 - 目前登录对话框通过 v-if="!userInfo" 控制显示
+            // 可以在这里添加其他逻辑，比如动画效果等
+        },
+
+        // DID相关功能
+        copyDID() {
+            if (!this.userInfo?.did) {
+                alert('DID不存在');
+                return;
+            }
+
+            navigator.clipboard.writeText(this.userInfo.did).then(() => {
+                alert('DID已复制到剪贴板');
+            }).catch(() => {
+                // 兼容性处理
+                const textArea = document.createElement('textarea');
+                textArea.value = this.userInfo.did;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('DID已复制到剪贴板');
+            });
+        },
+
+        validateDID() {
+            if (!this.userInfo?.did) {
+                alert('DID不存在');
+                return;
+            }
+
+            // 简单的DID格式验证
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+            if (didPattern.test(this.userInfo.did)) {
+                alert('DID格式验证通过！\n' + this.userInfo.did);
+            } else {
+                alert('DID格式验证失败！请检查DID格式是否正确。');
+            }
+        },
+
+        // 个人资料相关
+        showProfile() {
+            this.showProfileDialog = true;
+        },
+
+        closeProfile() {
+            this.showProfileDialog = false;
+        },
+
+        async refreshUserInfo() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('请先登录');
+                return;
+            }
+
+            try {
+                const response = await axios.get('/api/auth/userinfo', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (response.data && (response.data.code === 200 || response.data.success)) {
+                    this.userInfo = response.data.data;
+                    localStorage.setItem('userInfo', JSON.stringify(this.userInfo));
+                    alert('用户信息已刷新');
+                } else {
+                    throw new Error('获取用户信息失败');
+                }
+            } catch (error) {
+                console.error('刷新用户信息失败:', error);
+                alert('刷新失败：' + (error.response?.data?.message || error.message));
+            }
+        },
+
+        // 工具函数
+        formatDate(dateString) {
+            if (!dateString) return '未知';
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        },
+
+        navigateTo(module) {
+            // 页面跳转逻辑
+            const modulePages = {
+                'upload': '/static/upload.html',
+                'code': '/static/code.html',
+                'query': '/static/query.html',
+                'blockchain': '/static/blockchain.html',
+                'did-tools': '/static/did-tools.html',
+                'manual': '/static/manual.html'
+            };
+
+            if (modulePages[module]) {
+                window.location.href = modulePages[module];
+            }
+        }
+    }
+});
+</script>
+
+<style>
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+}
+
+.header {
+    background: linear-gradient(90deg, #409eff, #66b1ff);
+    color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.header-left .logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.header-right .user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-details {
+    text-align: right;
+}
+
+.user-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.user-did {
+    font-size: 12px;
+    opacity: 0.9;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.copy-did-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.copy-did-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.user-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.profile-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+}
+
+.profile-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.logout-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.main-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+    display: grid;
+    gap: 30px;
+}
+
+/* 导航区域 */
+.nav-section h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.nav-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.nav-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.nav-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #409eff;
+}
+
+.nav-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.nav-card h4 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 20px;
+}
+
+.nav-card p {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+/* 状态区域 */
+.status-section h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.status-card {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.status-title {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.status-value {
+    font-size: 28px;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+.status-value.status-online {
+    color: #27ae60;
+}
+
+/* 活动区域 */
+.activity-section h3 {
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.activity-list {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ecf0f1;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    font-size: 24px;
+    margin-right: 15px;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.activity-time {
+    color: #7f8c8d;
+    font-size: 12px;
+}
+
+/* 登录对话框 */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.login-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.login-header {
+    background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+    padding: 30px;
+    text-align: center;
+    color: white;
+    position: relative;
+}
+
+.login-logo {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 24px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.login-header h3 {
+    margin: 0 0 8px 0;
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.login-subtitle {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.login-form {
+    padding: 30px;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    font-size: 16px;
+    z-index: 1;
+    color: #666;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #409eff;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(64, 158, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-group input:focus + .input-icon {
+    color: #409eff;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.login-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.login-btn:hover:not(:disabled)::before {
+    left: 100%;
+}
+
+.login-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(64, 158, 255, 0.3);
+}
+
+.login-btn:disabled {
+    background: #e4e7ed;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.loading-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.login-links {
+    margin-top: 25px;
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.login-links a {
+    color: #409eff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.login-links a::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 50%;
+    background: #409eff;
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.login-links a:hover::after {
+    width: 100%;
+}
+
+.login-links a:hover {
+    color: #66b1ff;
+}
+
+/* 响应式适配 */
+@media (max-width: 480px) {
+    .login-container {
+        margin: 20px;
+        max-width: none;
+    }
+
+    .login-header,
+    .login-form {
+        padding: 25px 20px;
+    }
+
+    .login-header h3 {
+        font-size: 20px;
+    }
+
+    .form-group input {
+        padding: 12px 12px 12px 40px;
+    }
+
+    .input-icon {
+        left: 12px;
+        font-size: 14px;
+    }
+}
+
+/* 个人资料对话框 */
+.profile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.profile-container {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.profile-header {
+    padding: 20px 30px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 12px 12px 0 0;
+}
+
+.profile-header h3 {
+    margin: 0;
+    color: #2c3e50;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.close-btn:hover {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.profile-content {
+    padding: 30px;
+}
+
+.profile-item {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.profile-item label {
+    min-width: 100px;
+    font-weight: bold;
+    color: #555;
+    margin-right: 15px;
+}
+
+.profile-item span {
+    color: #333;
+    flex: 1;
+}
+
+.did-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.did-value {
+    font-family: monospace;
+    background: #f5f7fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #e4e7ed;
+    font-size: 13px;
+    flex: 1;
+    word-break: break-all;
+}
+
+.copy-btn, .validate-btn {
+    background: #409eff;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.copy-btn:hover, .validate-btn:hover {
+    background: #66b1ff;
+}
+
+.validate-btn {
+    background: #67c23a;
+}
+
+.validate-btn:hover {
+    background: #85ce61;
+}
+
+.status-active {
+    color: #67c23a;
+    font-weight: bold;
+}
+
+.profile-actions {
+    padding: 20px 30px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    background: #f8f9fa;
+    border-radius: 0 0 12px 12px;
+}
+
+.refresh-btn, .close-profile-btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    border: none;
+}
+
+.refresh-btn {
+    background: #409eff;
+    color: white;
+}
+
+.refresh-btn:hover {
+    background: #66b1ff;
+}
+
+.close-profile-btn {
+    background: #909399;
+    color: white;
+}
+
+.close-profile-btn:hover {
+    background: #a6a9ad;
+}
+</style>
+</body>
+</html>

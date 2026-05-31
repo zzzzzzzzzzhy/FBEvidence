@@ -1,0 +1,27 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+# 禁用FISCO BCOS在测试环境中的初始化
+fisco:
+  config-file: config-test.toml
+  group-id: 1
+  contract-address: 0x0000000000000000000000000000000000000000
+
+logging:
+  level:
+    com.evidence: debug
+    org.springframework.web: debug

@@ -1,0 +1,77 @@
+/* 6. 打印样式 - src/main/resources/static/css/print.css */
+@media print {
+    /* 隐藏不需要打印的元素 */
+    .header,
+    .nav-menu,
+    .user-dropdown,
+    .el-button,
+    .pagination,
+    .upload-actions,
+    .form-actions,
+    .modal,
+    .van-nav-bar,
+    .van-tabs__nav {
+        display: none !important;
+    }
+
+    /* 调整打印布局 */
+    body {
+        background: white !important;
+        color: black !important;
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+
+    .main-content {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .el-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        page-break-inside: avoid;
+    }
+
+    .el-table {
+        border: 1px solid #ddd !important;
+    }
+
+    .el-table th,
+    .el-table td {
+        border: 1px solid #ddd !important;
+        padding: 8px !important;
+    }
+
+    /* 分页控制 */
+    .page-break-before {
+        page-break-before: always;
+    }
+
+    .page-break-after {
+        page-break-after: always;
+    }
+
+    .no-page-break {
+        page-break-inside: avoid;
+    }
+
+    /* 标题样式 */
+    h1, h2, h3 {
+        page-break-after: avoid;
+        margin-top: 20pt;
+        margin-bottom: 10pt;
+    }
+
+    /* 链接样式 */
+    a {
+        color: black !important;
+        text-decoration: none !important;
+    }
+
+    a:after {
+        content: " (" attr(href) ")";
+        font-size: 10pt;
+        color: #666;
+    }
+}

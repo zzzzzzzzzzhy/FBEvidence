@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DID工具箱 - 区块链存证系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <style>
+        .tools-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .tool-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            padding: 30px;
+        }
+        .tool-title {
+            color: #2c3e50;
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #409eff;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dcdfe6;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: monospace;
+            box-sizing: border-box;
+        }
+        .form-control:focus {
+            border-color: #409eff;
+            outline: none;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background: #409eff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #66b1ff;
+        }
+        .btn-success {
+            background: #67c23a;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #85ce61;
+        }
+        .btn-warning {
+            background: #e6a23c;
+            color: white;
+        }
+        .btn-warning:hover {
+            background: #ebb563;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .result-success {
+            background: #f0f9ff;
+            border: 1px solid #67c23a;
+            color: #67c23a;
+        }
+        .result-error {
+            background: #fef0f0;
+            border: 1px solid #f56c6c;
+            color: #f56c6c;
+        }
+        .result-info {
+            background: #f5f7fa;
+            border: 1px solid #409eff;
+            color: #409eff;
+        }
+        .navigation {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .navigation a {
+            color: #409eff;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+        .navigation a:hover {
+            text-decoration: underline;
+        }
+        .did-examples {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .did-examples h5 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+        .did-examples code {
+            background: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #e4e7ed;
+            display: block;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="tools-container">
+        <div class="navigation">
+            <a href="/">返回首页</a>
+            <a href="/">用户登录</a>
+            <a href="/register">用户注册</a>
+        </div>
+
+        <h1 style="text-align: center; color: #2c3e50; margin-bottom: 40px;">DID工具箱</h1>
+
+        <!-- DID验证工具 -->
+        <div class="tool-section">
+            <h3 class="tool-title">🔍 DID格式验证</h3>
+            <div class="form-group">
+                <label>请输入要验证的DID:</label>
+                <input id="validateDid" class="form-control" placeholder="例如: did:evidence:a1b2c3d4e5f67890" />
+            </div>
+            <button class="btn btn-primary" onclick="validateDIDFormat()">验证格式</button>
+            <button class="btn btn-warning" onclick="copyText('validateDid')">复制DID</button>
+            <div id="validateResult"></div>
+
+            <div class="did-examples">
+                <h5>有效DID格式示例:</h5>
+                <code>did:evidence:a1b2c3d4e5f67890</code>
+                <code>did:evidence:0123456789abcdef</code>
+            </div>
+        </div>
+
+        <!-- DID生成工具 -->
+        <div class="tool-section">
+            <h3 class="tool-title">⚙️ DID生成模拟</h3>
+            <div class="form-group">
+                <label>用户名:</label>
+                <input id="genUsername" class="form-control" placeholder="输入用户名" />
+            </div>
+            <div class="form-group">
+                <label>邮箱 (可选):</label>
+                <input id="genEmail" class="form-control" placeholder="输入邮箱地址" type="email" />
+            </div>
+            <button class="btn btn-success" onclick="generateDIDMock()">生成DID</button>
+            <button class="btn btn-warning" onclick="copyText('generateResult')">复制结果</button>
+            <div id="generateResult"></div>
+
+            <div class="did-examples">
+                <h5>说明:</h5>
+                <p style="margin: 5px 0; color: #666; font-size: 14px;">
+                    这是一个模拟生成工具，实际DID生成需要通过后端API进行。
+                    该工具仅用于演示DID生成的基本逻辑。
+                </p>
+            </div>
+        </div>
+
+        <!-- DID解析工具 -->
+        <div class="tool-section">
+            <h3 class="tool-title">🔬 DID信息解析</h3>
+            <div class="form-group">
+                <label>请输入DID:</label>
+                <input id="parseDid" class="form-control" placeholder="输入完整的DID" />
+            </div>
+            <button class="btn btn-primary" onclick="parseDID()">解析DID</button>
+            <button class="btn btn-warning" onclick="copyHashPart()">复制哈希部分</button>
+            <div id="parseResult"></div>
+        </div>
+
+        <!-- 批量DID操作 -->
+        <div class="tool-section">
+            <h3 class="tool-title">📋 批量DID验证</h3>
+            <div class="form-group">
+                <label>请输入多个DID (每行一个):</label>
+                <textarea id="batchDids" class="form-control" rows="6" placeholder="did:evidence:a1b2c3d4e5f67890&#10;did:evidence:0123456789abcdef&#10;..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="batchValidate()">批量验证</button>
+            <button class="btn btn-success" onclick="exportValidResults()">导出有效DID</button>
+            <div id="batchResult"></div>
+        </div>
+
+        <!-- DID统计工具 -->
+        <div class="tool-section">
+            <h3 class="tool-title">📊 DID统计分析</h3>
+            <div class="form-group">
+                <label>DID列表 (每行一个):</label>
+                <textarea id="statsDids" class="form-control" rows="4" placeholder="输入DID列表进行统计分析"></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="analyzeDIDs()">分析统计</button>
+            <div id="statsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // DID格式验证
+        function validateDIDFormat() {
+            const did = document.getElementById('validateDid').value.trim();
+            const resultDiv = document.getElementById('validateResult');
+
+            if (!did) {
+                showResult(resultDiv, 'error', '请输入DID');
+                return;
+            }
+
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+            const isValid = didPattern.test(did);
+
+            if (isValid) {
+                const hashPart = did.substring('did:evidence:'.length);
+                showResult(resultDiv, 'success', `✅ DID格式验证通过！\n前缀: did:evidence:\n哈希: ${hashPart}\n长度: ${hashPart.length}位`);
+            } else {
+                let errorMsg = '❌ DID格式验证失败！\n';
+
+                if (!did.startsWith('did:evidence:')) {
+                    errorMsg += '- 必须以 "did:evidence:" 开头\n';
+                }
+
+                const hashPart = did.substring('did:evidence:'.length);
+                if (hashPart.length !== 16) {
+                    errorMsg += `- 哈希部分长度必须为16位，当前为${hashPart.length}位\n`;
+                }
+
+                if (!/^[a-f0-9]*$/.test(hashPart)) {
+                    errorMsg += '- 哈希部分只能包含小写字母a-f和数字0-9\n';
+                }
+
+                showResult(resultDiv, 'error', errorMsg);
+            }
+        }
+
+        // DID生成模拟
+        function generateDIDMock() {
+            const username = document.getElementById('genUsername').value.trim();
+            const email = document.getElementById('genEmail').value.trim();
+            const resultDiv = document.getElementById('generateResult');
+
+            if (!username) {
+                showResult(resultDiv, 'error', '请输入用户名');
+                return;
+            }
+
+            // 模拟生成逻辑（实际应该调用后端API）
+            const timestamp = Date.now().toString();
+            const randomPart = Math.floor(Math.random() * 999999).toString();
+            const input = username + (email ? ':' + email : '') + ':' + timestamp + ':' + randomPart;
+
+            // 简单哈希模拟（实际使用SHA-256）
+            const hash = simpleHash(input).substring(0, 16);
+            const mockDid = 'did:evidence:' + hash;
+
+            const resultText = `✅ DID生成成功！\n生成的DID: ${mockDid}\n输入信息: ${input}\n注意: 这是模拟生成，实际需要通过注册API`;
+            showResult(resultDiv, 'success', resultText);
+
+            // 更新结果框的ID，便于复制
+            resultDiv.setAttribute('data-copy-text', mockDid);
+        }
+
+        // DID解析
+        function parseDID() {
+            const did = document.getElementById('parseDid').value.trim();
+            const resultDiv = document.getElementById('parseResult');
+
+            if (!did) {
+                showResult(resultDiv, 'error', '请输入DID');
+                return;
+            }
+
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+            if (!didPattern.test(did)) {
+                showResult(resultDiv, 'error', '❌ 无效的DID格式');
+                return;
+            }
+
+            const prefix = 'did:evidence:';
+            const hashPart = did.substring(prefix.length);
+
+            const resultText = `🔬 DID解析结果:\n完整DID: ${did}\n方法: evidence\n哈希部分: ${hashPart}\n长度: ${hashPart.length}位\n字符集: 十六进制 (0-9, a-f)`;
+            showResult(resultDiv, 'info', resultText);
+        }
+
+        // 复制哈希部分
+        function copyHashPart() {
+            const did = document.getElementById('parseDid').value.trim();
+            if (!did || !did.startsWith('did:evidence:')) {
+                alert('请先输入有效的DID');
+                return;
+            }
+
+            const hashPart = did.substring('did:evidence:'.length);
+            copyToClipboard(hashPart);
+            alert('哈希部分已复制: ' + hashPart);
+        }
+
+        // 批量验证
+        function batchValidate() {
+            const didsText = document.getElementById('batchDids').value.trim();
+            const resultDiv = document.getElementById('batchResult');
+
+            if (!didsText) {
+                showResult(resultDiv, 'error', '请输入DID列表');
+                return;
+            }
+
+            const dids = didsText.split('\n').map(d => d.trim()).filter(d => d);
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+
+            let validCount = 0;
+            let invalidCount = 0;
+            let results = [];
+
+            dids.forEach((did, index) => {
+                const isValid = didPattern.test(did);
+                if (isValid) {
+                    validCount++;
+                    results.push(`✅ ${index + 1}. ${did}`);
+                } else {
+                    invalidCount++;
+                    results.push(`❌ ${index + 1}. ${did} (格式错误)`);
+                }
+            });
+
+            const summary = `📊 批量验证结果:\n总数: ${dids.length}\n有效: ${validCount}\n无效: ${invalidCount}\n\n详细结果:\n${results.join('\n')}`;
+            showResult(resultDiv, validCount === dids.length ? 'success' : 'info', summary);
+        }
+
+        // 导出有效DID
+        function exportValidResults() {
+            const didsText = document.getElementById('batchDids').value.trim();
+            if (!didsText) {
+                alert('请先进行批量验证');
+                return;
+            }
+
+            const dids = didsText.split('\n').map(d => d.trim()).filter(d => d);
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+            const validDids = dids.filter(did => didPattern.test(did));
+
+            if (validDids.length === 0) {
+                alert('没有有效的DID可导出');
+                return;
+            }
+
+            const exportText = validDids.join('\n');
+            copyToClipboard(exportText);
+            alert(`已复制 ${validDids.length} 个有效DID到剪贴板`);
+        }
+
+        // DID统计分析
+        function analyzeDIDs() {
+            const didsText = document.getElementById('statsDids').value.trim();
+            const resultDiv = document.getElementById('statsResult');
+
+            if (!didsText) {
+                showResult(resultDiv, 'error', '请输入DID列表');
+                return;
+            }
+
+            const dids = didsText.split('\n').map(d => d.trim()).filter(d => d);
+            const didPattern = /^did:evidence:[a-f0-9]{16}$/;
+
+            let validCount = 0;
+            let invalidCount = 0;
+            let hashFrequency = {};
+            let charFrequency = {};
+
+            dids.forEach(did => {
+                if (didPattern.test(did)) {
+                    validCount++;
+                    const hash = did.substring('did:evidence:'.length);
+
+                    // 统计哈希前缀频率
+                    const prefix = hash.substring(0, 4);
+                    hashFrequency[prefix] = (hashFrequency[prefix] || 0) + 1;
+
+                    // 统计字符频率
+                    for (let char of hash) {
+                        charFrequency[char] = (charFrequency[char] || 0) + 1;
+                    }
+                } else {
+                    invalidCount++;
+                }
+            });
+
+            const topPrefixes = Object.entries(hashFrequency)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .map(([prefix, count]) => `${prefix}: ${count}次`)
+                .join('\n');
+
+            const topChars = Object.entries(charFrequency)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 10)
+                .map(([char, count]) => `'${char}': ${count}次`)
+                .join(', ');
+
+            const stats = `📊 DID统计分析:\n\n基础统计:\n- 总DID数: ${dids.length}\n- 有效DID: ${validCount}\n- 无效DID: ${invalidCount}\n- 有效率: ${(validCount/dids.length*100).toFixed(2)}%\n\n哈希前缀频率 (Top 5):\n${topPrefixes}\n\n字符使用频率 (Top 10):\n${topChars}`;
+
+            showResult(resultDiv, 'info', stats);
+        }
+
+        // 工具函数
+        function showResult(element, type, text) {
+            element.innerHTML = `<div class="result-box result-${type}">${text}</div>`;
+        }
+
+        function copyText(inputId) {
+            const input = document.getElementById(inputId);
+            copyToClipboard(input.value);
+            alert('内容已复制到剪贴板');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // 简单哈希函数（仅用于演示）
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // 转换为32位整数
+            }
+            return Math.abs(hash).toString(16).padStart(16, '0');
+        }
+
+        // 页面加载时显示示例
+        document.addEventListener('DOMContentLoaded', function() {
+            // 预填充一些示例数据
+            document.getElementById('validateDid').value = 'did:evidence:a1b2c3d4e5f67890';
+            document.getElementById('parseDid').value = 'did:evidence:0123456789abcdef';
+        });
+    </script>
+</body>
+</html>

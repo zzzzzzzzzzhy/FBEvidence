@@ -1,0 +1,411 @@
+<!-- 3. 查询专用页面 - src/main/resources/static/query.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存证查询 - 区块链存证系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+<div id="queryApp" class="standalone-page">
+    <!-- 页面头部 -->
+    <div class="page-header">
+        <div class="header-content">
+            <h1><i class="el-icon-search"></i> 存证查询验证</h1>
+            <p>查询和验证您的区块链存证记录</p>
+            <el-button type="text" @click="goBack">
+                <i class="el-icon-arrow-left"></i> 返回主页
+            </el-button>
+        </div>
+    </div>
+
+    <!-- 查询区域 -->
+    <div class="query-container">
+        <!-- 搜索表单 -->
+        <el-card shadow="hover" class="search-card">
+            <div slot="header">
+                <span>搜索条件</span>
+                <el-button style="float: right;" type="text" @click="resetSearch">
+                    <i class="el-icon-refresh"></i> 重置
+                </el-button>
+            </div>
+
+            <el-form :model="searchForm" :inline="true" class="search-form">
+                <el-form-item label="文件名：">
+                    <el-input
+                            v-model="searchForm.fileName"
+                            placeholder="输入文件名关键词"
+                            clearable
+                            style="width: 200px;">
+                    </el-input>
+                </el-form-item>
+
+                <el-form-item label="文件哈希：">
+                    <el-input
+                            v-model="searchForm.fileHash"
+                            placeholder="输入完整文件哈希"
+                            clearable
+                            style="width: 300px;">
+                    </el-input>
+                </el-form-item>
+
+                <el-form-item label="交易哈希：">
+                    <el-input
+                            v-model="searchForm.transactionHash"
+                            placeholder="输入交易哈希"
+                            clearable
+                            style="width: 300px;">
+                    </el-input>
+                </el-form-item>
+
+                <el-form-item label="状态：">
+                    <el-select v-model="searchForm.chainStatus" placeholder="选择状态" clearable>
+                        <el-option label="待上链" :value="0"></el-option>
+                        <el-option label="上链成功" :value="1"></el-option>
+                        <el-option label="上链失败" :value="2"></el-option>
+                    </el-select>
+                </el-form-item>
+
+                <el-form-item>
+                    <el-button type="primary" @click="handleSearch">
+                        <i class="el-icon-search"></i> 搜索
+                    </el-button>
+                    <el-button type="success" @click="showQuickVerify">
+                        <i class="el-icon-check"></i> 快速验证
+                    </el-button>
+                </el-form-item>
+            </el-form>
+        </el-card>
+
+        <!-- 搜索结果 -->
+        <el-card shadow="hover" style="margin-top: 20px;">
+            <div slot="header">
+                <span>搜索结果（共 {{ total }} 条）</span>
+                <div style="float: right;">
+                    <el-button size="small" @click="refreshResults">
+                        <i class="el-icon-refresh"></i> 刷新
+                    </el-button>
+                    <el-button size="small" type="primary" @click="exportResults">
+                        <i class="el-icon-download"></i> 导出
+                    </el-button>
+                </div>
+            </div>
+
+            <el-table
+                    :data="searchResults"
+                    v-loading="searchLoading"
+                    stripe
+                    border
+                    style="width: 100%">
+
+                <el-table-column type="index" label="序号" width="60"></el-table-column>
+
+                <el-table-column prop="fileName" label="文件名" min-width="180" show-overflow-tooltip>
+                    <template slot-scope="scope">
+                        <i class="el-icon-document"></i> {{ scope.row.fileName }}
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="fileHash" label="文件哈希" min-width="220" show-overflow-tooltip>
+                    <template slot-scope="scope">
+                        <el-link type="primary" @click="copyHash(scope.row.fileHash)">
+                            {{ scope.row.fileHash.substring(0, 16) }}...
+                        </el-link>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="fileSize" label="大小" width="100">
+                    <template slot-scope="scope">
+                        {{ formatFileSize(scope.row.fileSize) }}
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="chainStatus" label="状态" width="120">
+                    <template slot-scope="scope">
+                        <el-tag :type="getStatusType(scope.row.chainStatus)" size="small">
+                            {{ getStatusText(scope.row.chainStatus) }}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="transactionHash" label="交易哈希" min-width="180" show-overflow-tooltip>
+                    <template slot-scope="scope">
+                        <el-link v-if="scope.row.transactionHash" type="success">
+                            {{ scope.row.transactionHash.substring(0, 16) }}...
+                        </el-link>
+                        <span v-else>-</span>
+                    </template>
+                </el-table-column>
+
+                <el-table-column prop="blockNumber" label="区块号" width="100"></el-table-column>
+
+                <el-table-column prop="createdAt" label="创建时间" width="160">
+                    <template slot-scope="scope">
+                        {{ formatDate(scope.row.createdAt) }}
+                    </template>
+                </el-table-column>
+
+                <el-table-column label="操作" width="200" fixed="right">
+                    <template slot-scope="scope">
+                        <el-button size="mini" @click="viewDetail(scope.row)">详情</el-button>
+                        <el-button size="mini" type="success" @click="verifyEvidence(scope.row.fileHash)">验证</el-button>
+                        <el-button size="mini" type="warning" @click="viewOnChain(scope.row)">区块链</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <!-- 分页 -->
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total"
+                    style="margin-top: 20px; text-align: right;">
+            </el-pagination>
+        </el-card>
+    </div>
+
+    <!-- 快速验证对话框 -->
+    <el-dialog title="快速验证" :visible.sync="quickVerifyVisible" width="50%">
+        <el-form>
+            <el-form-item label="文件哈希：">
+                <el-input
+                        v-model="quickVerifyHash"
+                        placeholder="请输入完整的文件哈希值"
+                        maxlength="64">
+                </el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-alert
+                        title="验证说明"
+                        description="输入文件哈希值，系统将在区块链上验证该文件是否存在且未被篡改"
+                        type="info"
+                        :closable="false">
+                </el-alert>
+            </el-form-item>
+        </el-form>
+        <div slot="footer">
+            <el-button @click="quickVerifyVisible = false">取消</el-button>
+            <el-button type="primary" @click="doQuickVerify" :loading="verifyLoading">验证</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- 详情对话框 -->
+    <el-dialog title="存证详情" :visible.sync="detailVisible" width="70%">
+        <el-descriptions :column="2" v-if="selectedItem" border>
+            <el-descriptions-item label="文件名">{{ selectedItem.fileName }}</el-descriptions-item>
+            <el-descriptions-item label="文件大小">{{ formatFileSize(selectedItem.fileSize) }}</el-descriptions-item>
+            <el-descriptions-item label="文件哈希" :span="2">{{ selectedItem.fileHash }}</el-descriptions-item>
+            <el-descriptions-item label="哈希算法">{{ selectedItem.hashAlgorithm }}</el-descriptions-item>
+            <el-descriptions-item label="上链状态">
+                <el-tag :type="getStatusType(selectedItem.chainStatus)">
+                    {{ getStatusText(selectedItem.chainStatus) }}
+                </el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="描述信息" :span="2">{{ selectedItem.description || '无' }}</el-descriptions-item>
+            <el-descriptions-item label="交易哈希" :span="2" v-if="selectedItem.transactionHash">
+                {{ selectedItem.transactionHash }}
+            </el-descriptions-item>
+            <el-descriptions-item label="区块号" v-if="selectedItem.blockNumber">{{ selectedItem.blockNumber }}</el-descriptions-item>
+            <el-descriptions-item label="合约地址" v-if="selectedItem.contractAddress">{{ selectedItem.contractAddress }}</el-descriptions-item>
+            <el-descriptions-item label="创建时间">{{ formatDate(selectedItem.createdAt) }}</el-descriptions-item>
+            <el-descriptions-item label="更新时间">{{ formatDate(selectedItem.updatedAt) }}</el-descriptions-item>
+        </el-descriptions>
+        <div slot="footer">
+            <el-button @click="detailVisible = false">关闭</el-button>
+            <el-button type="success" @click="verifyEvidence(selectedItem.fileHash)">验证存证</el-button>
+        </div>
+    </el-dialog>
+</div>
+
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/axios/0.24.0/axios.min.js"></script>
+<script>
+    new Vue({
+        el: '#queryApp',
+        data() {
+            return {
+                searchForm: {
+                    fileName: '',
+                    fileHash: '',
+                    transactionHash: '',
+                    chainStatus: null
+                },
+                searchResults: [],
+                searchLoading: false,
+                currentPage: 1,
+                pageSize: 10,
+                total: 0,
+                quickVerifyVisible: false,
+                quickVerifyHash: '',
+                verifyLoading: false,
+                detailVisible: false,
+                selectedItem: null
+            }
+        },
+
+        created() {
+            this.checkAuth();
+            this.loadData();
+        },
+
+        methods: {
+            checkAuth() {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    this.$message.error('请先登录系统');
+                    window.location.href = '/';
+                    return;
+                }
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            },
+
+            loadData() {
+                this.searchLoading = true;
+                const params = {
+                    ...this.searchForm,
+                    current: this.currentPage,
+                    size: this.pageSize
+                };
+
+                Object.keys(params).forEach(key => {
+                    if (params[key] === '' || params[key] === null) {
+                        delete params[key];
+                    }
+                });
+
+                axios.get('/api/evidence/list', { params })
+                    .then(response => {
+                        this.searchResults = response.data.records || [];
+                        this.total = response.data.total || 0;
+                    })
+                    .finally(() => {
+                        this.searchLoading = false;
+                    });
+            },
+
+            handleSearch() {
+                this.currentPage = 1;
+                this.loadData();
+            },
+
+            resetSearch() {
+                this.searchForm = {
+                    fileName: '',
+                    fileHash: '',
+                    transactionHash: '',
+                    chainStatus: null
+                };
+                this.currentPage = 1;
+                this.loadData();
+            },
+
+            refreshResults() {
+                this.loadData();
+            },
+
+            exportResults() {
+                this.$message.info('导出功能开发中...');
+            },
+
+            handleSizeChange(size) {
+                this.pageSize = size;
+                this.currentPage = 1;
+                this.loadData();
+            },
+
+            handleCurrentChange(page) {
+                this.currentPage = page;
+                this.loadData();
+            },
+
+            showQuickVerify() {
+                this.quickVerifyVisible = true;
+                this.quickVerifyHash = '';
+            },
+
+            doQuickVerify() {
+                if (!this.quickVerifyHash.trim()) {
+                    this.$message.warning('请输入文件哈希值');
+                    return;
+                }
+
+                this.verifyLoading = true;
+                this.verifyEvidence(this.quickVerifyHash.trim());
+                this.quickVerifyVisible = false;
+            },
+
+            verifyEvidence(fileHash) {
+                const loading = this.$loading({
+                    lock: true,
+                    text: '正在验证存证...'
+                });
+
+                axios.post('/api/evidence/verify', null, {
+                    params: { fileHash }
+                }).then(response => {
+                    if (response.data) {
+                        this.$message.success('验证通过！文件确实存在于区块链上');
+                    } else {
+                        this.$message.warning('验证失败！文件可能不存在或已被篡改');
+                    }
+                }).finally(() => {
+                    loading.close();
+                    this.verifyLoading = false;
+                });
+            },
+
+            viewDetail(item) {
+                this.selectedItem = item;
+                this.detailVisible = true;
+            },
+
+            viewOnChain(item) {
+                if (item.transactionHash) {
+                    this.$alert(`交易哈希: ${item.transactionHash}\n区块号: ${item.blockNumber}`, '区块链信息');
+                } else {
+                    this.$message.warning('该文件尚未上链');
+                }
+            },
+
+            copyHash(hash) {
+                navigator.clipboard.writeText(hash).then(() => {
+                    this.$message.success('哈希值已复制到剪贴板');
+                });
+            },
+
+            goBack() {
+                window.location.href = '/';
+            },
+
+            formatFileSize(bytes) {
+                if (!bytes) return '0B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i];
+            },
+
+            formatDate(date) {
+                if (!date) return '';
+                return new Date(date).toLocaleString('zh-CN');
+            },
+
+            getStatusType(status) {
+                return { 0: 'warning', 1: 'success', 2: 'danger' }[status] || 'info';
+            },
+
+            getStatusText(status) {
+                return { 0: '待上链', 1: '上链成功', 2: '上链失败' }[status] || '未知';
+            }
+        }
+    });
+</script>
+</body>
+</html>
