@@ -99,6 +99,16 @@ public class FileEvidence {
     @TableField("did_document")
     private String didDocument;
 
+    // ZK 承诺字段
+    @TableField("commitment_hash")
+    private String commitmentHash;   // SHA-256(file_hash || salt)，上链的承诺值
+
+    @TableField("salt_hex")
+    private String saltHex;          // 随机盐，仅所有者可见
+
+    @TableField("zk_status")
+    private Integer zkStatus;        // 0=未生成 1=已生成 2=失败
+
     @TableField(value = "created_at", fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
 

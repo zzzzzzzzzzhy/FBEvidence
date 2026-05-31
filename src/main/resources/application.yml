@@ -91,3 +91,7 @@ server:
 app:
   auth:
     skip: true   # 仅开发环境启用，生产不要开
+
+zk:
+  evidence:
+    prover-binary: ${ZK_EVIDENCE_PROVER_BINARY:}   # 留空=mock模式，填路径=真实ZK

@@ -1,0 +1,16 @@
+[workspace]
+members  = ["methods", "host"]
+exclude  = ["methods/guest"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+
+[workspace.dependencies]
+risc0-zkvm = { version = "^3.0.5" }
+serde      = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2       = "0.10"
+hex        = "0.4"
+anyhow     = "1.0"
