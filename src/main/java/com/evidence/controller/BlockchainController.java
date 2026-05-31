@@ -1,10 +1,15 @@
 package com.evidence.controller;
 
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.evidence.common.Result;
+import com.evidence.entity.FileEvidence;
+import com.evidence.mapper.EvidenceMapper;
 import com.evidence.service.BlockchainService;
 import com.evidence.util.RedisCacheUtil;
+import com.evidence.util.RedisQueueUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.fisco.bcos.sdk.model.TransactionReceipt;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -15,6 +20,8 @@ public class BlockchainController {
 
     private final BlockchainService blockchainService;
     private final RedisCacheUtil redisCacheUtil;
+    private final EvidenceMapper evidenceMapper;
+    private final RedisQueueUtil redisQueueUtil;
 
     @GetMapping("/block-number")
     public Result<Long> getBlockNumber() {
@@ -109,6 +116,43 @@ public class BlockchainController {
             info.put("groupId", "group1");
             info.put("error", e.getMessage());
             return Result.success(info);
+        }
+    }
+
+    /**
+     * 手动重新上链（修复上链失败的存证记录）
+     */
+    @PostMapping("/rechain/{evidenceId}")
+    public Result<String> rechainEvidence(@PathVariable Long evidenceId) {
+        log.info("=== 手动重新上链: evidenceId={} ===", evidenceId);
+        try {
+            FileEvidence ev = evidenceMapper.selectById(evidenceId);
+            if (ev == null) return Result.error("存证记录不存在: " + evidenceId);
+
+            // 直接调链，同步等待结果
+            TransactionReceipt receipt = blockchainService.addEvidence(
+                ev.getFileHash(), ev.getFileName(), "admin",
+                ev.getFileSize(), ev.getDescription());
+
+            String bnStr = receipt.getBlockNumber();
+            long blockNumber = 0L;
+            if (bnStr != null && !bnStr.isEmpty()) {
+                blockNumber = bnStr.startsWith("0x")
+                    ? Long.parseLong(bnStr.substring(2), 16) : Long.parseLong(bnStr);
+            }
+
+            evidenceMapper.update(null, new LambdaUpdateWrapper<FileEvidence>()
+                .eq(FileEvidence::getId, evidenceId)
+                .set(FileEvidence::getTransactionHash, receipt.getTransactionHash())
+                .set(FileEvidence::getBlockNumber, blockNumber)
+                .set(FileEvidence::getChainStatus, 1)
+                .set(FileEvidence::getChainMessage, "上链成功（手动触发）"));
+
+            log.info("手动重新上链成功: evidenceId={}, txHash={}", evidenceId, receipt.getTransactionHash());
+            return Result.success("上链成功，txHash=" + receipt.getTransactionHash());
+        } catch (Exception e) {
+            log.error("手动重新上链失败: evidenceId={}", evidenceId, e);
+            return Result.error("上链失败: " + e.getMessage());
         }
     }
 

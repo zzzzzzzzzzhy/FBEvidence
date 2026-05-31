@@ -206,9 +206,11 @@ public class AsyncTaskServiceImpl implements AsyncTaskService {
             task.setRetryCount(task.getRetryCount() + 1);
             
             if (task.getRetryCount() < 3) {
-                // 重新加入队列重试
-                log.info("重新加入队列重试: evidenceId={}, retryCount={}", 
-                        task.getEvidenceId(), task.getRetryCount());
+                // 重试前等待，给 FISCO BCOS lazy 初始化留时间（指数退避：5s / 15s / 30s）
+                long waitSeconds = (long) Math.pow(3, task.getRetryCount()) * 5;
+                log.info("{}秒后重试上链: evidenceId={}, retryCount={}",
+                        waitSeconds, task.getEvidenceId(), task.getRetryCount());
+                try { Thread.sleep(waitSeconds * 1000); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
                 redisQueueUtil.pushBlockchainTask(task);
             } else {
                 // 超过重试次数，标记为失败
