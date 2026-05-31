@@ -95,3 +95,7 @@ app:
 zk:
   evidence:
     prover-binary: ${ZK_EVIDENCE_PROVER_BINARY:}   # 留空=mock模式，填路径=真实ZK
+
+webhook:
+  github:
+    secret: ${GITHUB_WEBHOOK_SECRET:}              # 留空=不验签，生产环境必须设置
