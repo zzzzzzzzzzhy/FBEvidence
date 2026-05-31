@@ -273,10 +273,10 @@ public class BlockchainServiceImpl implements BlockchainService {
      */
     private String generateNodeId(int nodeIndex) {
         String[] nodeIds = {
-            "0x1a2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-            "0x2b3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-            "0x3c4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12",
-            "0x4d5e6f7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef12"
+            "0x995bb4b9240286ff53f147bd3d5a9c14ff42d1a8fc5e6403700d360208645433c2f42214eab98d51986155a0aa3aaba52806354a2bfb8f241f2194af9e3e3ff3",
+            "0x8358832b8eeef1f14b4f3e7b6d75a7adaac5c2fe1911ba76df2e2deab40455031da2af2ad298683a3a82abd0b277a2f7edb46632bcfb94ec0317776fee95acb7",
+            "0x4a6db5beb1b44ef845b185b903ec13f90763031c01e1e249572524d307ec3ed73d1708093ed3e2305ec80344f37f5c9a080283d987d840d19ece148a68c28ca6",
+            "0x80a0642910d62fec19d478740a37f13d4edcc4f3788ee8611fc6f76c258a3c7d4c68239ae96836da349069a22c8e190069cac4914d5584e7e2c5c77e76bd386b"
         };
         return nodeIndex <= nodeIds.length ? nodeIds[nodeIndex - 1] : "0x" + Integer.toHexString(nodeIndex) + "000...";
     }
