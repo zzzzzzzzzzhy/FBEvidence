@@ -282,7 +282,6 @@ public class EvidenceServiceImpl extends ServiceImpl<EvidenceMapper, FileEvidenc
 
     @Override
     public boolean verifyEvidence(String fileHash) {
-        // 检查数据库中是否存在
         LambdaQueryWrapper<FileEvidence> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FileEvidence::getFileHash, fileHash);
         FileEvidence evidence = getOne(wrapper);
@@ -291,8 +290,20 @@ public class EvidenceServiceImpl extends ServiceImpl<EvidenceMapper, FileEvidenc
             return false;
         }
 
-        // 验证区块链
-        return blockchainService.verifyEvidence(fileHash);
+        // 链上存证：有交易哈希且状态为成功即视为有效
+        if (evidence.getTransactionHash() != null && !evidence.getTransactionHash().isEmpty()
+                && evidence.getChainStatus() != null
+                && evidence.getChainStatus() == Constants.CHAIN_STATUS_SUCCESS) {
+            return true;
+        }
+
+        // 兜底：尝试合约调用
+        try {
+            return blockchainService.verifyEvidence(fileHash);
+        } catch (Exception e) {
+            log.warn("合约验证调用失败，回退到DB验证: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Override

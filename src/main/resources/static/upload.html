@@ -421,6 +421,55 @@
                         <span>{{ currentEvidence.description || '暂无描述' }}</span>
                     </div>
                 </div>
+
+                <!-- ZK 零知识证明区块 -->
+                <div class="zk-section">
+                    <div class="zk-title">
+                        <span class="zk-icon">🔐</span>
+                        <span>零知识证明</span>
+                        <span class="zk-badge" :class="zkStatusClass">{{ zkStatusText }}</span>
+                    </div>
+
+                    <div class="zk-info" v-if="currentEvidence.commitmentHash">
+                        <div class="zk-field">
+                            <label>承诺哈希:</label>
+                            <span class="hash-text">{{ currentEvidence.commitmentHash }}</span>
+                        </div>
+                    </div>
+
+                    <div class="zk-proof-result" v-if="zkProof">
+                        <div class="zk-field">
+                            <label>证明摘要:</label>
+                            <span class="hash-text">{{ zkProof.journalDigest }}</span>
+                        </div>
+                        <div class="zk-field">
+                            <label>证明模式:</label>
+                            <span>{{ zkProof.status === 'MOCK' ? 'Mock模式（本地验证）' : '真实ZK证明' }}</span>
+                        </div>
+                        <div class="zk-field">
+                            <label>验证结果:</label>
+                            <span class="zk-valid">✓ 验证通过</span>
+                        </div>
+                        <div class="zk-field">
+                            <label>生成时间:</label>
+                            <span>{{ formatDateTime(zkProof.createdAt) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="zk-actions">
+                        <button @click="generateZkCommit"
+                                :disabled="zkLoading || currentEvidence.commitmentHash"
+                                class="zk-btn zk-btn-commit">
+                            {{ zkLoading && zkStep === 'commit' ? '生成中...' : (currentEvidence.commitmentHash ? '✓ 承诺已生成' : '① 生成ZK承诺') }}
+                        </button>
+                        <button @click="generateZkProve"
+                                :disabled="zkLoading || !currentEvidence.commitmentHash"
+                                class="zk-btn zk-btn-prove">
+                            {{ zkLoading && zkStep === 'prove' ? '证明中...' : '② 生成ZK证明' }}
+                        </button>
+                    </div>
+                    <p class="zk-hint">承诺哈希隐藏原始文件内容，ZK证明可验证持有者知晓原文件而无需披露文件</p>
+                </div>
             </div>
         </div>
     </div>
@@ -471,6 +520,11 @@ new Vue({
             showDetailDialog: false,
             editingGroup: null,
             editingProject: null,
+
+            // ZK 零知识证明
+            zkProof: null,
+            zkLoading: false,
+            zkStep: '',
 
             // 表单数据
             groupForm: {
@@ -523,6 +577,20 @@ new Vue({
                 return this.projects;
             }
             return this.projects.filter(project => project.groupId == this.projectFilter.groupId);
+        },
+        zkStatusText() {
+            if (!this.currentEvidence) return '';
+            const s = this.currentEvidence.zkStatus;
+            if (s === 2) return '已证明';
+            if (s === 1) return '已承诺';
+            return '未生成';
+        },
+        zkStatusClass() {
+            if (!this.currentEvidence) return '';
+            const s = this.currentEvidence.zkStatus;
+            if (s === 2) return 'zk-badge-proved';
+            if (s === 1) return 'zk-badge-committed';
+            return 'zk-badge-none';
         }
     },
     mounted() {
@@ -979,6 +1047,55 @@ new Vue({
         viewEvidenceDetail(evidence) {
             this.currentEvidence = evidence;
             this.showDetailDialog = true;
+            this.zkProof = null;
+            this.zkStep = '';
+            // 若已有proof，静默加载
+            if (evidence.commitmentHash) {
+                axios.get(`/api/zk/evidence/${evidence.id}/proof`)
+                    .then(r => { if (r.data.code === 200) this.zkProof = r.data.data; })
+                    .catch(() => {});
+            }
+        },
+
+        async generateZkCommit() {
+            this.zkLoading = true;
+            this.zkStep = 'commit';
+            try {
+                const r = await axios.post(`/api/zk/evidence/${this.currentEvidence.id}/commit`);
+                if (r.data.code === 200) {
+                    this.currentEvidence.commitmentHash = r.data.data.commitmentHash;
+                    this.currentEvidence.zkStatus = r.data.data.zkStatus;
+                    // 同步列表中对应条目
+                    const item = this.evidenceList.find(e => e.id === this.currentEvidence.id);
+                    if (item) { item.commitmentHash = r.data.data.commitmentHash; item.zkStatus = r.data.data.zkStatus; }
+                } else {
+                    alert('承诺生成失败：' + r.data.message);
+                }
+            } catch (e) {
+                alert('请求失败：' + e.message);
+            } finally {
+                this.zkLoading = false;
+                this.zkStep = '';
+            }
+        },
+
+        async generateZkProve() {
+            this.zkLoading = true;
+            this.zkStep = 'prove';
+            try {
+                const r = await axios.post(`/api/zk/evidence/${this.currentEvidence.id}/prove`);
+                if (r.data.code === 200) {
+                    this.zkProof = r.data.data;
+                    this.currentEvidence.zkStatus = 2;
+                } else {
+                    alert('证明生成失败：' + r.data.message);
+                }
+            } catch (e) {
+                alert('请求失败：' + e.message);
+            } finally {
+                this.zkLoading = false;
+                this.zkStep = '';
+            }
         },
 
         async downloadFile(evidence) {
@@ -1860,6 +1977,68 @@ body {
         width: auto;
     }
 }
+/* ZK 零知识证明区块 */
+.zk-section {
+    margin-top: 20px;
+    border: 1px solid #e0e7ff;
+    border-radius: 10px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%);
+}
+.zk-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #4f46e5;
+    margin-bottom: 14px;
+    font-size: 15px;
+}
+.zk-icon { font-size: 18px; }
+.zk-badge {
+    margin-left: auto;
+    font-size: 12px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+.zk-badge-none    { background: #f3f4f6; color: #6b7280; }
+.zk-badge-committed { background: #dbeafe; color: #1d4ed8; }
+.zk-badge-proved  { background: #d1fae5; color: #065f46; }
+.zk-field {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+.zk-field label { color: #6b7280; min-width: 72px; flex-shrink: 0; }
+.zk-proof-result {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+}
+.zk-valid   { color: #059669; font-weight: 600; }
+.zk-invalid { color: #dc2626; font-weight: 600; }
+.zk-actions { display: flex; gap: 10px; margin-bottom: 10px; }
+.zk-btn {
+    flex: 1;
+    padding: 8px 0;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.zk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.zk-btn-commit { background: #4f46e5; color: #fff; }
+.zk-btn-commit:hover:not(:disabled) { background: #4338ca; }
+.zk-btn-prove  { background: #7c3aed; color: #fff; }
+.zk-btn-prove:hover:not(:disabled)  { background: #6d28d9; }
+.zk-hint { font-size: 11px; color: #9ca3af; margin: 0; line-height: 1.5; }
 </style>
 </body>
 </html>

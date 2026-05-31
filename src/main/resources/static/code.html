@@ -221,51 +221,77 @@
 
         <!-- 存证记录 -->
         <div class="section">
-            <h3>代码存证记录</h3>
+            <div class="section-title-row">
+                <h3>代码存证记录</h3>
+                <button @click="loadEvidenceList" class="refresh-btn-small">刷新</button>
+            </div>
             <div class="records-container">
                 <div class="records-table">
                     <div class="table-header">
-                        <div class="col">文件名</div>
-                        <div class="col">分组/项目</div>
-                        <div class="col">分支</div>
-                        <div class="col">提交哈希</div>
-                        <div class="col">链上状态</div>
-                        <div class="col">存证时间</div>
-                        <div class="col">操作</div>
+                        <div class="col col-source">来源</div>
+                        <div class="col col-commit">提交信息</div>
+                        <div class="col col-repo">仓库/分支</div>
+                        <div class="col col-hash">Commit Hash</div>
+                        <div class="col col-tx">链上交易</div>
+                        <div class="col col-status">状态</div>
+                        <div class="col col-time">存证时间</div>
+                        <div class="col col-action">操作</div>
                     </div>
-                    <div v-for="record in evidenceList" :key="record.id" class="table-row">
-                        <div class="col">
-                            <div class="file-info">
-                                <span class="file-icon">📄</span>
-                                <span>{{ record.fileName }}</span>
+                    <div v-if="evidenceList.length === 0" class="empty-tip">暂无代码存证记录</div>
+                    <div v-for="record in pagedEvidenceList" :key="record.id" class="table-row">
+                        <!-- 来源 -->
+                        <div class="col col-source">
+                            <span v-if="isGithubRecord(record)" class="source-badge source-github">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;margin-right:3px"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                                GitHub
+                            </span>
+                            <span v-else class="source-badge source-local">本地</span>
+                        </div>
+                        <!-- 提交信息 -->
+                        <div class="col col-commit">
+                            <div class="commit-info">
+                                <span class="commit-msg" :title="record.gitCommitMessage">{{ truncate(record.gitCommitMessage, 28) }}</span>
+                                <span class="commit-author" v-if="record.gitAuthorName">{{ record.gitAuthorName }}</span>
                             </div>
                         </div>
-                        <div class="col">{{ record.gitGroupName }}/{{ record.gitProjectName }}</div>
-                        <div class="col">
-                            <span class="branch-tag">{{ record.gitBranchName }}</span>
-                        </div>
-                        <div class="col">
-                            <span class="hash-text">{{ formatHash(record.gitCommitHash) }}</span>
-                        </div>
-                        <div class="col">
-                            <span :class="'status-' + record.chainStatus">{{ getChainStatusText(record.chainStatus) }}</span>
-                        </div>
-                        <div class="col">{{ formatDateTime(record.createdAt) }}</div>
-                        <div class="col">
-                            <div class="action-buttons">
-                                <button @click="viewDetails(record)" class="action-btn">详情</button>
-                                <button @click="downloadCode(record)" class="action-btn">下载</button>
+                        <!-- 仓库/分支 -->
+                        <div class="col col-repo">
+                            <div>
+                                <span class="repo-name">{{ record.gitProjectName }}</span>
+                                <span class="branch-tag">{{ record.gitBranchName }}</span>
                             </div>
+                        </div>
+                        <!-- Commit Hash -->
+                        <div class="col col-hash">
+                            <span class="hash-text mono">{{ formatHash(record.gitCommitHash) }}</span>
+                        </div>
+                        <!-- 链上交易哈希 -->
+                        <div class="col col-tx">
+                            <span v-if="record.transactionHash" class="hash-text mono tx-hash" :title="record.transactionHash">
+                                {{ formatHash(record.transactionHash) }}
+                            </span>
+                            <span v-else class="no-tx">待上链</span>
+                        </div>
+                        <!-- 状态 -->
+                        <div class="col col-status">
+                            <span :class="'status-badge status-' + record.chainStatus">{{ getChainStatusText(record.chainStatus) }}</span>
+                        </div>
+                        <!-- 时间 -->
+                        <div class="col col-time">{{ formatDateTime(record.createdAt) }}</div>
+                        <!-- 操作 -->
+                        <div class="col col-action">
+                            <button @click="viewDetails(record)" class="action-btn">详情</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- 分页 -->
-                <div class="pagination">
+                <div class="pagination" v-if="pagination.total > pagination.size">
                     <button @click="changePage(pagination.page - 1)" :disabled="pagination.page <= 1" class="page-btn">上一页</button>
-                    <span class="page-info">第 {{ pagination.page }} 页，共 {{ Math.ceil(pagination.total / pagination.size) }} 页</span>
+                    <span class="page-info">第 {{ pagination.page }} 页 / 共 {{ Math.ceil(pagination.total / pagination.size) }} 页（{{ pagination.total }} 条）</span>
                     <button @click="changePage(pagination.page + 1)" :disabled="pagination.page >= Math.ceil(pagination.total / pagination.size)" class="page-btn">下一页</button>
                 </div>
+                <div class="record-count" v-else-if="pagination.total > 0">共 {{ pagination.total }} 条记录</div>
             </div>
         </div>
 
@@ -430,9 +456,15 @@ new Vue({
     },
     mounted() {
         this.checkLogin();
-        this.loadRepositories(); // 这里会自动加载分支
+        this.loadRepositories();
         this.loadEvidenceList();
         this.loadStats();
+    },
+    computed: {
+        pagedEvidenceList() {
+            const start = (this.pagination.page - 1) * this.pagination.size;
+            return this.evidenceList.slice(start, start + this.pagination.size);
+        }
     },
     methods: {
         checkLogin() {
@@ -804,6 +836,15 @@ new Vue({
         formatHash(hash) {
             if (!hash) return '-';
             return hash.substring(0, 8) + '...' + hash.substring(hash.length - 8);
+        },
+
+        isGithubRecord(record) {
+            return record.gitRepositoryPath && record.gitRepositoryPath.startsWith('github://');
+        },
+
+        truncate(str, len) {
+            if (!str) return '—';
+            return str.length > len ? str.substring(0, len) + '…' : str;
         },
 
         formatFileSize(bytes) {
@@ -1402,6 +1443,44 @@ body {
     width: 100px;
     flex-shrink: 0;
 }
+/* 代码存证记录表增强 */
+.section-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.section-title-row h3 { margin: 0; }
+
+.col-source  { width: 80px;  flex-shrink: 0; }
+.col-commit  { flex: 2; min-width: 160px; }
+.col-repo    { width: 130px; flex-shrink: 0; }
+.col-hash    { width: 130px; flex-shrink: 0; }
+.col-tx      { width: 130px; flex-shrink: 0; }
+.col-status  { width: 80px;  flex-shrink: 0; }
+.col-time    { width: 130px; flex-shrink: 0; }
+.col-action  { width: 60px;  flex-shrink: 0; }
+
+.source-badge {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+}
+.source-github { background: #24292f; color: #fff; }
+.source-local  { background: #e0f2fe; color: #0369a1; }
+
+.commit-info { display: flex; flex-direction: column; gap: 2px; }
+.commit-msg  { font-size: 13px; color: #111; font-weight: 500; }
+.commit-author { font-size: 11px; color: #6b7280; }
+
+.repo-name { display: block; font-size: 12px; color: #374151; font-weight: 500; margin-bottom: 3px; }
+
+.mono { font-family: 'Courier New', monospace; font-size: 12px; }
+.tx-hash { color: #6d28d9; }
+.no-tx { font-size: 12px; color: #9ca3af; }
+
+.status-badge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.status-badge.status-0 { background: #fef3c7; color: #92400e; }
+.status-badge.status-1 { background: #d1fae5; color: #065f46; }
+.status-badge.status-2 { background: #fee2e2; color: #991b1b; }
+
+.empty-tip { text-align: center; color: #9ca3af; padding: 30px; font-size: 14px; }
+.record-count { text-align: center; color: #6b7280; font-size: 13px; padding: 10px; }
 </style>
 </body>
 </html>
