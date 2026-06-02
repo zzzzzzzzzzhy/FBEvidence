@@ -128,6 +128,7 @@
             <h3>最新区块</h3>
             <div class="blocks-container">
                 <div class="blocks-header">
+                    <span class="block-total">共 {{ totalBlockHeight }} 个区块</span>
                     <button @click="loadBlocks" class="refresh-btn" :disabled="loadingBlocks">{{ loadingBlocks ? '加载中...' : '刷新区块' }}</button>
                 </div>
                 <div class="blocks-table">
@@ -137,6 +138,8 @@
                         <div class="col">生成时间</div>
                         <div class="col">操作</div>
                     </div>
+                    <div v-if="loadingBlocks && blockList.length === 0" class="table-empty">加载中...</div>
+                    <div v-if="!loadingBlocks && blockList.length === 0" class="table-empty">暂无区块数据</div>
                     <div v-for="block in blockList" :key="block.height" class="table-row">
                         <div class="col">{{ block.height }}</div>
                         <div class="col">
@@ -147,6 +150,14 @@
                             <button @click="viewBlockDetails(block)" class="action-btn">详情</button>
                         </div>
                     </div>
+                </div>
+                <!-- 分页控件 -->
+                <div class="pagination" v-if="totalBlockPages > 1">
+                    <button @click="changeBlockPage(1)" :disabled="blockPage === 1 || loadingBlocks" class="page-btn">«</button>
+                    <button @click="changeBlockPage(blockPage - 1)" :disabled="blockPage === 1 || loadingBlocks" class="page-btn">‹</button>
+                    <span class="page-info">第 {{ blockPage }} / {{ totalBlockPages }} 页</span>
+                    <button @click="changeBlockPage(blockPage + 1)" :disabled="blockPage === totalBlockPages || loadingBlocks" class="page-btn">›</button>
+                    <button @click="changeBlockPage(totalBlockPages)" :disabled="blockPage === totalBlockPages || loadingBlocks" class="page-btn">»</button>
                 </div>
             </div>
         </div>
@@ -236,6 +247,9 @@ new Vue({
             nodeList: [],
             blockList: [],
             loadingBlocks: false,
+            blockPage: 1,
+            blockPageSize: 5,
+            totalBlockHeight: 0,
             systemStats: {
                 totalTransactions: 1520,
                 totalEvidence: 458,
@@ -246,6 +260,11 @@ new Vue({
             },
             showBlockDialog: false,
             currentBlock: null
+        }
+    },
+    computed: {
+        totalBlockPages() {
+            return Math.ceil(this.totalBlockHeight / this.blockPageSize) || 1;
         }
     },
     mounted() {
@@ -360,47 +379,42 @@ new Vue({
             if (this.loadingBlocks) return;
             this.loadingBlocks = true;
             try {
-                // 获取当前区块高度
                 const blockNumberResponse = await axios.get('/api/blockchain/block-number');
                 if (blockNumberResponse.data.success || blockNumberResponse.data.code === 200) {
                     const currentHeight = blockNumberResponse.data.data;
                     this.networkInfo.blockHeight = currentHeight;
+                    this.totalBlockHeight = currentHeight;
 
-                    // 获取最近10个区块的信息
-                    this.blockList = [];
-                    for (let i = 0; i < 10 && currentHeight - i >= 0; i++) {
-                        const blockHeight = currentHeight - i;
-                        try {
-                            const blockResponse = await axios.get(`/api/blockchain/block/${blockHeight}`);
-                            if (blockResponse.data.success || blockResponse.data.code === 200) {
-                                // 解析区块信息（假设返回JSON字符串）
-                                const blockData = JSON.parse(blockResponse.data.data || '{}');
+                    // 当前页的起止区块高度（从高到低）
+                    const startHeight = currentHeight - (this.blockPage - 1) * this.blockPageSize;
+                    const endHeight = Math.max(0, startHeight - this.blockPageSize + 1);
 
-                                // 只有当区块数据有效时才添加到列表中
-                                if (blockData.hash) {
-                                    this.blockList.push({
-                                        height: blockHeight,
-                                        hash: blockData.hash || '',
-                                        parentHash: blockData.parentHash || '',
-                                        merkleRoot: blockData.transactionsRoot || '',
-                                        transactionCount: blockData.transactions ? blockData.transactions.length : 0,
-                                        size: blockData.size || 0,
-                                        timestamp: blockData.timestamp ? new Date(parseInt(blockData.timestamp, 16)) : new Date(),
-                                        gasUsed: blockData.gasUsed || 0,
-                                        gasLimit: blockData.gasLimit || 0
-                                    });
-                                } else {
-                                    console.warn(`区块 ${blockHeight} 数据不完整，跳过显示`);
-                                }
-                            } else {
-                                console.warn(`无法获取区块 ${blockHeight} 信息:`, blockResponse.data.message);
-                            }
-                        } catch (error) {
-                            console.warn(`获取区块 ${blockHeight} 失败:`, error.message);
-                        }
-                    }
+                    const heights = [];
+                    for (let h = startHeight; h >= endHeight; h--) heights.push(h);
+
+                    const results = await Promise.all(heights.map(h =>
+                        axios.get(`/api/blockchain/block/${h}`).catch(() => null)
+                    ));
+
+                    this.blockList = results
+                        .map((res, i) => {
+                            if (!res || !(res.data.success || res.data.code === 200)) return null;
+                            const blockData = JSON.parse(res.data.data || '{}');
+                            if (!blockData.hash) return null;
+                            return {
+                                height: heights[i],
+                                hash: blockData.hash || '',
+                                parentHash: blockData.parentHash || '',
+                                merkleRoot: blockData.transactionsRoot || '',
+                                transactionCount: blockData.transactions ? blockData.transactions.length : 0,
+                                size: blockData.size || 0,
+                                timestamp: blockData.timestamp ? new Date(parseInt(blockData.timestamp, 16)) : new Date(),
+                                gasUsed: blockData.gasUsed || 0,
+                                gasLimit: blockData.gasLimit || 0
+                            };
+                        })
+                        .filter(Boolean);
                 } else {
-                    console.error('获取区块高度失败:', blockNumberResponse.data.message);
                     this.blockList = [];
                 }
             } catch (error) {
@@ -409,6 +423,12 @@ new Vue({
             } finally {
                 this.loadingBlocks = false;
             }
+        },
+
+        async changeBlockPage(page) {
+            if (page < 1 || page > this.totalBlockPages || this.loadingBlocks) return;
+            this.blockPage = page;
+            await this.loadBlocks();
         },
 
         viewBlockDetails(block) {
@@ -444,13 +464,12 @@ new Vue({
         },
 
         startAutoRefresh() {
-            // 每30秒自动刷新一次
+            // 每60秒自动刷新网络状态（不含区块列表，区块列表请手动刷新）
             this.refreshInterval = setInterval(() => {
                 this.refreshNetworkInfo();
-                this.loadBlocks();
                 this.loadNodeList();
                 this.loadSystemStats();
-            }, 30000);
+            }, 60000);
         },
 
         getNodeStatusText(status) {
@@ -627,6 +646,59 @@ body {
 .status-desc {
     font-size: 12px;
     color: #6c757d;
+}
+
+.block-total {
+    font-size: 13px;
+    color: #666;
+}
+
+.table-empty {
+    text-align: center;
+    padding: 24px;
+    color: #999;
+    font-size: 14px;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px 0 4px;
+}
+
+.page-btn {
+    padding: 4px 10px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    background: #fff;
+    color: #409eff;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #ecf5ff;
+}
+
+.page-btn:disabled {
+    color: #c0c4cc;
+    cursor: not-allowed;
+}
+
+.page-info {
+    font-size: 13px;
+    color: #606266;
+    padding: 0 6px;
+}
+
+.blocks-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
 }
 
 .refresh-section {
