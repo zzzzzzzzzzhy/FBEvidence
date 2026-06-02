@@ -128,7 +128,7 @@
             <h3>最新区块</h3>
             <div class="blocks-container">
                 <div class="blocks-header">
-                    <button @click="loadBlocks" class="refresh-btn">刷新区块</button>
+                    <button @click="loadBlocks" class="refresh-btn" :disabled="loadingBlocks">{{ loadingBlocks ? '加载中...' : '刷新区块' }}</button>
                 </div>
                 <div class="blocks-table">
                     <div class="table-header">
@@ -235,6 +235,7 @@ new Vue({
             },
             nodeList: [],
             blockList: [],
+            loadingBlocks: false,
             systemStats: {
                 totalTransactions: 1520,
                 totalEvidence: 458,
@@ -356,6 +357,8 @@ new Vue({
         },
 
         async loadBlocks() {
+            if (this.loadingBlocks) return;
+            this.loadingBlocks = true;
             try {
                 // 获取当前区块高度
                 const blockNumberResponse = await axios.get('/api/blockchain/block-number');
@@ -403,6 +406,8 @@ new Vue({
             } catch (error) {
                 console.error('加载区块信息失败:', error);
                 this.blockList = [];
+            } finally {
+                this.loadingBlocks = false;
             }
         },
 
