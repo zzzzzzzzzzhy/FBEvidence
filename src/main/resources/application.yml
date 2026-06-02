@@ -99,3 +99,8 @@ zk:
 webhook:
   github:
     secret: ${GITHUB_WEBHOOK_SECRET:}              # 留空=不验签，生产环境必须设置
+
+# 生产环境必须设置的环境变量：
+#   JWT_SECRET=<随机长字符串>
+#   GITHUB_WEBHOOK_SECRET=<GitHub Webhook 配置的 secret>
+#   ZK_EVIDENCE_PROVER_BINARY=<prove 二进制路径>（可选，留空=mock模式）

@@ -29,12 +29,12 @@ public class MinIOConfig {
     /**
      * 访问用户名
      */
-    private String accessKey = "minio";
+    private String accessKey = "minioadmin";
 
     /**
-     * 访问密码
+     * 访问密码（从 application.yml minio.secret-key 读取，默认 minioadmin）
      */
-    private String secretKey = "minio123";
+    private String secretKey = "minioadmin";
 
     /**
      * 默认存储桶名称

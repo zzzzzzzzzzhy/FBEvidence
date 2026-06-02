@@ -2,8 +2,10 @@ package com.evidence.common;
 
 public class Constants {
 
-    // JWT相关
-    public static final String JWT_SECRET = "blockchain-evidence-system-secret-key";
+    // JWT相关（从环境变量读取，未设置时使用默认值，生产环境必须设置 JWT_SECRET）
+    public static final String JWT_SECRET = System.getenv("JWT_SECRET") != null
+            ? System.getenv("JWT_SECRET")
+            : "blockchain-evidence-system-secret-key-change-in-production";
     public static final long JWT_EXPIRATION = 24 * 60 * 60 * 1000L; // 24小时
     public static final String JWT_HEADER = "Authorization";
     public static final String JWT_PREFIX = "Bearer ";

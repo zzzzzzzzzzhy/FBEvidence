@@ -45,3 +45,7 @@ application.log
 test_group_check.html
 test_groups_fix.html
 "E:JavaProject*"
+
+### Secrets - never commit ###
+src/main/resources/application-dev.yml
+src/main/resources/conf/*.key
