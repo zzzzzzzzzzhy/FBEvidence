@@ -250,28 +250,11 @@ public class FileUtil {
     }
 
     /**
-     * 计算字节数组的SHA256哈希值
+     * 计算字节数组的SM3哈希值（国密）
      * @param data 字节数组
-     * @return SHA256哈希值（十六进制字符串）
+     * @return SM3哈希值（十六进制字符串）
      */
     public static String calculateSHA256(byte[] data) {
-        try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(data);
-            StringBuilder hexString = new StringBuilder();
-            
-            for (byte b : hashBytes) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            
-            return hexString.toString();
-        } catch (Exception e) {
-            log.error("计算SHA256失败", e);
-            throw new RuntimeException("计算文件哈希失败: " + e.getMessage(), e);
-        }
+        return HashUtil.sm3(data);
     }
 }

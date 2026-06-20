@@ -27,8 +27,8 @@
     <fisco-bcos-java-sdk.version>2.9.1</fisco-bcos-java-sdk.version>
     <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
     <mysql-connector.version>8.0.33</mysql-connector.version>
-    <jwt.version>0.11.5</jwt.version>
     <hutool.version>5.8.16</hutool.version>
+    <bouncycastle.version>1.70</bouncycastle.version>
     <jgit.version>6.7.0.202309050840-r</jgit.version>
   </properties>
 
@@ -82,25 +82,11 @@
       <version>${fisco-bcos-java-sdk.version}</version>
     </dependency>
 
-    <!-- JWT -->
+    <!-- BouncyCastle 国密算法支持（SM2/SM3/SM4） -->
     <dependency>
-      <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-api</artifactId>
-      <version>${jwt.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-impl</artifactId>
-      <version>${jwt.version}</version>
-      <scope>runtime</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>io.jsonwebtoken</groupId>
-      <artifactId>jjwt-jackson</artifactId>
-      <version>${jwt.version}</version>
-      <scope>runtime</scope>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+      <version>${bouncycastle.version}</version>
     </dependency>
 
     <!-- Hutool 工具包 -->

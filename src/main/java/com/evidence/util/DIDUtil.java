@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -50,25 +48,15 @@ public class DIDUtil {
             input.append(":").append(timestamp);
             input.append(":").append(randomPart);
 
-            // 生成SHA256哈希
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.toString().getBytes(StandardCharsets.UTF_8));
+            // 生成SM3哈希（国密）
+            String fullHash = HashUtil.sm3(input.toString());
 
-            // 转换为16进制字符串（取前16位保持简洁）
-            StringBuilder hexString = new StringBuilder();
-            for (int i = 0; i < Math.min(hash.length, 8); i++) {
-                String hex = Integer.toHexString(0xff & hash[i]);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-
-            String did = DID_PREFIX + hexString.toString();
+            // 取前16位保持简洁
+            String did = DID_PREFIX + fullHash.substring(0, 16);
             log.info("为用户 {} 生成DID: {}", username, did);
             return did;
 
-        } catch (NoSuchAlgorithmException e) {
+        } catch (Exception e) {
             log.error("生成DID时发生错误", e);
             throw new RuntimeException("DID生成失败", e);
         }
